@@ -43,7 +43,13 @@ using namespace std;
 			{			
 				if(strcmp(elements[i], "phase") == 0)
 					phase = atoi(values[i]);
+				
+				if(strcmp(elements[i], "node") == 0)
+					node = atoi(values[i]);
 					
+				if(strcmp(elements[i], "jitter") == 0)
+					jitter = atoi(values[i]);
+						
 				if(strcmp(elements[i], "period") == 0)
 					period = atoi(values[i]);
 					
@@ -80,9 +86,10 @@ using namespace std;
 	
 	std::ostream& operator<< (std::ostream &out, const Task &task)
 	{
-		out << "pr task:" 		<< task.name 		<< "[id=" 	<< task.id
+		out << " task:" 		<< task.name 		<< "[id=" 	<< task.id
 			<< ", type=" 		<< task.type 
 			<< ", priority=" 	<< task.priority
+			<< ", node=" 		<< task.node
 			<< "](" 			<< task.period 		<< ", " 	<< task.deadline << ")";
 	 
 		return out;

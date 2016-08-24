@@ -18,8 +18,9 @@ using namespace std;
 
 int main(int argc, char ** argv)
  {
-	const string messageStart	= "==========";
-	const string tasksetFile 	= "taskset.xml";
+	const string messageStart		= "==========";
+	const string tasksetFile	 	= "taskset.xml";
+	const string transactionFile	= "transactions.xml";
 	int exit_status = 0;
 
 	cout <<	endl	<<	messageStart + " e2e-res started " + messageStart << endl;
@@ -39,6 +40,14 @@ int main(int argc, char ** argv)
 	for(unsigned int i=0;i<tasks.size();i++)
 		cout << *tasks[i]	<< endl;
 	
+	cout << messageStart + "Reading transactions ..." << endl;
+	vector<Transaction*> transactions = iReader->ReadTransactions(transactionFile);
+	cout <<	"found "	<<	transactions.size() << " transactions: \n";
+	for(unsigned int i=0;i<transactions.size();i++)
+	{
+		cout << *transactions[i]	<< endl;
+		transactions[i]->Build_transaction(tasks);
+	}	
 	cout << messageStart + " e2e-res ended " + messageStart << endl	<< endl;
 	return exit_status;	  
 }

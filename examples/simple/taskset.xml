@@ -2,12 +2,23 @@
 <taskset>
 	<periodicTask>
 		<number>1</number>
+		<id>1</id>
 		<type>one</type>
 		<period>100</period>
 		<deadline>100</deadline>
+		<node>1</node>
 		<memCons>5</memCons>
 	</periodicTask> 	
 	<periodicTask>
+		<id>2</id>
+		<number>1</number>
+		<type>two</type>
+		<period>200</period>
+		<deadline>200</deadline>
+		<memCons>5</memCons>
+	</periodicTask>
+	<periodicTask>
+		<id>3</id>
 		<number>1</number>
 		<type>two</type>
 		<period>200</period>

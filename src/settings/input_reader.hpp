@@ -7,7 +7,7 @@
 #include <sstream>
 
 #include <libxml/xmlreader.h>
-#include "../application/task.hpp"
+#include "../application/transaction.hpp"
 
 
 #include <libxml/parser.h>
@@ -34,7 +34,11 @@ public:
 	 * returns a TaskSet object
 	 */ 
 	vector<Task*> ReadTaskset(const string fileName);
-	
+	/**
+	 * reads a file named transactions.xml from the input directory and
+	 * returns a vector of Transactions
+	 */ 
+	vector<Transaction*> ReadTransactions(const string fileName);
 	/**
 	 * reads csv files and 
 	 * returns a two dimentional vector of string
@@ -45,14 +49,16 @@ public:
 	friend std::ostream& operator<< (std::ostream &out, const InputReader &inputReader);
 	
 private:
-	enum 						ReadingModes{TASK, PLATFORM, WCET, CONSTRAINTS};
+	enum 						ReadingModes{TASK, TRANSACTION, PLATFORM, WCET, CONSTRAINTS};
 	ReadingModes				xmlReadingMode;
 	string 						inputsPath;
-	vector<Task*> 		tasks;
+	vector<Task*> 				tasks;
+	vector<Transaction*> 		transactions;
 	
 	void 	walk_tree( xmlNodePtr node );
 	int 	count_element_children( xmlNodePtr node );
 	void 	parsTaskXMLNode(vector<char*> elements, vector<char*> values, xmlNodePtr node);
+	void 	parsTransXMLNode(vector<char*> elements, vector<char*> values, xmlNodePtr node);
 	void 	readXML(string filePath);
 	char* 	getValueOfElement(vector<char*> elements, vector<char*> values, char* inElement);
 	char* 	getValueOfElement(xmlNodePtr node, char* inElement);

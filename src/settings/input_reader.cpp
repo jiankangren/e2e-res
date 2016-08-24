@@ -43,6 +43,9 @@ int InputReader::count_element_children( xmlNodePtr node )
 			case(TASK):
 				parsTaskXMLNode(elements, values, node);
 				break;
+			case(TRANSACTION):
+				parsTransXMLNode(elements, values, node);
+				break;
 			default:
 				break;
 		}
@@ -60,6 +63,19 @@ int InputReader::count_element_children( xmlNodePtr node )
 			int taskNumber = atoi(getValueOfElement(elements, values, (char *)"number"));
 			for(int i=0;i<taskNumber;i++)
 				tasks.push_back(new Task(elements, values, i));
+			return;
+		}
+	}
+	
+	void InputReader::parsTransXMLNode(vector<char*> elements, vector<char*> values, xmlNodePtr node)
+	{
+		const xmlChar* transNodeName = (xmlChar*) "transaction";
+		/**
+		 * if the node is a transaction, then create one and push it in the transaction vactor
+		 */ 
+		if ( node->parent && xmlStrEqual(node->parent->name, transNodeName) == 1)
+		{
+			transactions.push_back(new Transaction(elements, values));
 			return;
 		}
 	}
@@ -108,6 +124,17 @@ int InputReader::count_element_children( xmlNodePtr node )
 		readXML(filePath);
 		
 		return tasks;
+	}
+	
+	vector<Transaction*> InputReader::ReadTransactions(const string fileName)
+	{
+		
+		string filePath = inputsPath;
+		filePath += fileName;
+		xmlReadingMode = TRANSACTION;
+		readXML(filePath);
+		
+		return transactions;
 	}
 	
 	void InputReader::readXML(string filePath)
