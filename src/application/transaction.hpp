@@ -1,7 +1,7 @@
 /**
  * This class encapsulates both tasks and messages
  */ 
-
+#pragma once
 #include <math.h>
 #include <iostream>
 #include <vector>

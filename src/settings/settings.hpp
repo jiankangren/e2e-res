@@ -15,7 +15,7 @@ class Settings
 {
 public:
 	
-	enum CPModels 		{NONECP, SDF, SDF_PR_ONLINE};
+	enum CPModels 		{NONECP, CP};
 	enum SearchTypes 	{NONESEARCH, FIRST, ALL, OPTIMIZE, OPTIMIZE_IT, GIST_ALL, GIST_OPT, PSA};
 	enum OptCriterion	{NONE, POWER, THROUGHPUT, LATENCY};
 	

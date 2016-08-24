@@ -1,0 +1,5 @@
+*** Solution number: 1, after 0 ms, search nodes: 1, fail: 0, propagate: 0, depth: 0, nogoods: 0 ***
+----------------------------------------
+budget: {[0..2], [0..2]}
+period: {[0..2], [0..2]}
+----------------------------------------

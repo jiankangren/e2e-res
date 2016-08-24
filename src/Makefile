@@ -67,7 +67,7 @@ PROGRAMS := ../bin/e2e-res
 
 # Defines the application modules for the Gecode solver
 MODULES!../bin/e2e-res := \
-    .  settings application
+    .  settings application cp_model execution
 
 
 

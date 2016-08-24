@@ -6,11 +6,12 @@
 		<type>one</type>
 		<period>100</period>
 		<deadline>100</deadline>
-		<node>1</node>
+		<node>0</node>
 		<memCons>5</memCons>
 	</periodicTask> 	
 	<periodicTask>
 		<id>2</id>
+		<node>1</node>
 		<number>1</number>
 		<type>two</type>
 		<period>200</period>
@@ -19,6 +20,7 @@
 	</periodicTask>
 	<periodicTask>
 		<id>3</id>
+		<node>2</node>
 		<number>1</number>
 		<type>two</type>
 		<period>200</period>

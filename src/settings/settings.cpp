@@ -15,8 +15,7 @@ using namespace std;
 		string modelStr = "";
 		switch(model)
 		{
-			case SDF_PR_ONLINE  : 	modelStr = "SDF_PR_ONLINE";   		break;
-			case SDF  			: 	modelStr = "SDF";   				break;
+			case CP  			:	modelStr = "CP";			   		break;
 			default				:	cout << "unknown model type !!!"; 	break;
 		}
 		return modelStr;
@@ -119,9 +118,9 @@ using namespace std;
 		try
 		{
 			string modelStr = cfg.lookup("model");
-			if(modelStr.compare("SDF_PR_ONLINE") == 0)
+			if(modelStr.compare("CP") == 0)
 			{
-				model = SDF_PR_ONLINE;
+				model = CP;
 			}
 		}
 		catch(const SettingNotFoundException &nfex)
