@@ -257,6 +257,19 @@ using namespace std;
 		{
 			cerr << "No 'inputs' setting in configuration file." << endl;
 		}
+		/**
+		 * Get min period
+		 */
+		try
+		{
+			string minPeriodStr 	= 	cfg.lookup("min_period");
+			min_period 				=	atoi(minPeriodStr.c_str());
+			
+		}
+		catch(const SettingNotFoundException &nfex)
+		{
+			cerr << "No 'min_period' setting in configuration file." << endl;
+		} 
 		return 1;
 	}
 	int Settings::IsDebug()
@@ -318,6 +331,10 @@ using namespace std;
 	unsigned long int Settings::getTimeout()
 	{
 		return timeout;
+	}
+	int Settings::getMin_period()
+	{
+		return min_period;
 	}
 	std::ostream& operator<< (std::ostream &out, const Settings &settings)
 	{

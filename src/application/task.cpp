@@ -76,6 +76,10 @@ using namespace std;
 					
 				if(strcmp(elements[i], "preemtable") == 0)
 					preemtable = atoi(values[i]);
+				
+				if(strcmp(elements[i], "execution") == 0)
+					execution = atoi(values[i]);
+					
 			}				
 			catch(std::exception const & e)
 			{

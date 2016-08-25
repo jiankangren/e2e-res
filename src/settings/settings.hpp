@@ -56,6 +56,10 @@ public:
 	 * Returns the timeout for search
 	 */
 	unsigned long int getTimeout();  
+	/**
+	 * Returns allowed minimum period
+	 */ 
+	int getMin_period();
 	friend std::ostream& operator<< (std::ostream &out, const Settings &settings);
 	
 private:
@@ -68,8 +72,9 @@ private:
 	string 	inputsPath;
 	string 	outputsPath;
 	int 	debug;
-	unsigned long int luby_scale;
-	unsigned long int timeout;			/**< Search timeout. */
+	unsigned long int 	luby_scale;
+	unsigned long int 	timeout;			/**< Search timeout. */
+	int 				min_period;			/*!< minimum allowed period. */
 	int loadDSESettings();
 
 };

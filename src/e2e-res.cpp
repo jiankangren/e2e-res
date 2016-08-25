@@ -7,7 +7,6 @@
 
 
 
-
 using namespace Gecode;
 using namespace Int;
 using namespace std;
@@ -56,8 +55,12 @@ int main(int argc, char ** argv)
 		transactions[i]->Build_transaction(tasks);
 	}	
 	
+	cout << messageStart + "Creating an application object ... " << endl;
+	Application * application = new Application(transactions);
+	cout << *application;
+	
 	cout << messageStart + "Creating a constraint model object ... " << endl;
-	CP_model* model = new CP_model(transactions, settings, no_nodes);	
+	CP_model* model = new CP_model(application, settings, no_nodes);	
 	
 	cout << messageStart + "Creating an execution object ... " << endl;
 	Execution<CP_model> execObj(model, settings);

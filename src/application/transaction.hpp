@@ -15,9 +15,12 @@ using namespace std;
 
 class Transaction{
 public:
-	int id;						/*! The id of transaction.*/
-	vector<Task*> 	tasks;		/*!< A set of pointers pointing to the tasks and messages.*/
-	vector<int> 	task_ids;	/*!< The sequence of tasks and messages based on their ids.*/
+	int id;										/*! The id of transaction.*/
+	vector<Task*> 	tasks;						/*!< A set of pointers pointing to the tasks and messages.*/
+	vector<int> 	task_ids;					/*!< The sequence of tasks and messages based on their ids.*/
+	int				deadline;					/*!< The end-to-end deadline of transaction.*/
+	int				age_delay_deadline;			/*!< The end-to-end deadline of transaction.*/
+	int				reaction_delay_deadline;	/*!< The end-to-end deadline of transaction.*/
 	Transaction();
 	
 	/**
@@ -28,7 +31,12 @@ public:
 	/**
 	 * This function finds builds the task vector, i.e. tasks based on the task_ids vector
 	 */ 
+	/**
+	 * Returns the utilization of elements on node n.
+	 */  
+	double get_utilization(int n);
 	void Build_transaction(vector<Task*> all_tasks);
+	
 	friend std::ostream& operator<< (std::ostream &out, const Transaction &trans);
 	
 };

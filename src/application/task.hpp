@@ -25,6 +25,7 @@ public:
 	bool preemtable;
 	int jitter;		 	/*!< Task jitter. */
 	int node;		 	/*!< Task node. We assume that the tasks are already mapped on processors.*/
+	int execution; 		/*!< Task execution time on its node.*/
 	vector<int> links;	/*!< A set of links that the message crosses.*/
 
 	Task(int _phase, int _period, int _deadline, int _mem, int _cS, int _priority, string _name, string _type, int _id);

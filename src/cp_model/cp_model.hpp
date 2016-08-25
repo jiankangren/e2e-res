@@ -7,7 +7,7 @@
 #include <gecode/gist.hh>
 #include <gecode/minimodel.hh>
 
-#include "../application/transaction.hpp"
+#include "../application/application.hpp"
 #include "../settings/settings.hpp"
 
 using namespace Gecode;
@@ -19,7 +19,7 @@ class CP_model : public Space
 {
   
 private:
-	vector<Transaction*> 	transactions;/**< Vector of pointer to the transactions. */  
+	Application* 			application;/**< A pointer to the application. */  
 	Settings*	 			settings;	/**< Pointer to the setting object. */
 
 
@@ -30,7 +30,7 @@ private:
   
 public:
 
-	CP_model(vector<Transaction*> 	_transactions, Settings* _settings, int _nodes);
+	CP_model(Application* _application, Settings* _settings, int _nodes);
 
 	CP_model(bool share, CP_model& s);
 

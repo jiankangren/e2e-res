@@ -28,7 +28,7 @@
 # MODULE PATH AND FILES
 #=======================
 
-CPP_FILES := task.cpp transaction.cpp
+CPP_FILES := task.cpp transaction.cpp application.cpp
              
 
 

@@ -12,6 +12,7 @@
 #include "../cp_model/cp_model.hpp"
 #include <chrono>
 #include <fstream> 
+
 using namespace std;
 using namespace Gecode;
 

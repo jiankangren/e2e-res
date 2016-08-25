@@ -15,6 +15,12 @@ id(0)
 				task_ids.push_back(atoi(values[i]));	
 			if(strcmp(elements[i], "id") == 0)
 				id = atoi(values[i]);				
+			if(strcmp(elements[i], "deadline") == 0)
+				deadline = atoi(values[i]);					
+			if(strcmp(elements[i], "age_delay_deadline") == 0)
+				age_delay_deadline = atoi(values[i]);				
+			if(strcmp(elements[i], "reaction_delay_deadline") == 0)
+				reaction_delay_deadline = atoi(values[i]);						
 		}				
 		catch(std::exception const & e)
 		{
@@ -47,6 +53,19 @@ void Transaction::Build_transaction(vector<Task*> all_tasks)
 			return;
 		}
 	}
+}
+double Transaction::get_utilization(int n)
+{
+	double utilization = 0.0;
+	for(unsigned int i=0;i<tasks.size();i++)
+	{
+		if(tasks[i]->node == n)
+		{
+			utilization += ((double) tasks[i]->execution)/tasks[i]->period;
+		}
+	}
+	
+	return utilization;
 }
 std::ostream& operator<< (std::ostream &out, const Transaction &trans)
 {
