@@ -40,7 +40,7 @@ void Transaction::Build_transaction(vector<Task*> all_tasks)
 		bool task_j_found = false;
 		for(unsigned i=0;i<all_tasks.size();i++)
 		{
-			if(all_tasks[i]->id == task_ids[j])
+			if(all_tasks[i]->get_id() == task_ids[j])
 			{
 				tasks.push_back(all_tasks[i]);
 				task_j_found = true;
@@ -59,9 +59,9 @@ double Transaction::get_utilization(int n)
 	double utilization = 0.0;
 	for(unsigned int i=0;i<tasks.size();i++)
 	{
-		if(tasks[i]->node == n)
+		if(tasks[i]->get_node() == n)
 		{
-			utilization += ((double) tasks[i]->execution)/tasks[i]->period;
+			utilization += tasks[i]->get_utilization();
 		}
 	}
 	

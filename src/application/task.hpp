@@ -12,7 +12,7 @@
 using namespace std;
 
 class Task{
-public:
+private:
 	int phase;
 	int period;
 	int deadline;
@@ -27,7 +27,10 @@ public:
 	int node;		 	/*!< Task node. We assume that the tasks are already mapped on processors.*/
 	int execution; 		/*!< Task execution time on its node.*/
 	vector<int> links;	/*!< A set of links that the message crosses.*/
+	
+	int response_time;	/*!< The response time of tasks, this has to be set by the analysis.*/
 
+public:
 	Task(int _phase, int _period, int _deadline, int _mem, int _cS, int _priority, string _name, string _type, int _id);
 
 	Task(int _period, int _mem, int _cS, string _name, string _type, int _id);
@@ -38,6 +41,20 @@ public:
 	 */ 
 	Task(vector<char*> elements, vector<char*> values, int number);
 
+	/**
+	 * returns the task utilization
+	 */
+	 double get_utilization(); 
+	 /**
+	  * returns the task load at a given time point
+	  */
+	int get_load(int time); 
+	int get_node();
+	int get_id();
+	int get_priority();
+	int get_execution();
+	int get_period();
+	void set_response_time(int _response_time);
 	friend std::ostream& operator<< (std::ostream &out, const Task &task);
 	
 };

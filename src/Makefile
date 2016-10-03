@@ -82,7 +82,7 @@ LDFLAGS  +=
 LDLIBS   += -L/usr/lib/ -lgecodeint -lgecodeset -lgecodesearch -lgecodekernel \
             -lgecodesupport -lgecodeminimodel -lgecodegist \
             -lsdf3-base -lsdf3-sdf -lxml2 -lboost_system \
-            -lboost_filesystem -lconfig++
+            -lboost_filesystem -lconfig++ application/libsched.a
 
 
 

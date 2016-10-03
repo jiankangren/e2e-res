@@ -39,7 +39,6 @@ export PARTDOCSBUILDMSG = "%...\n"
 
 export TARGET     = bin
 export TARGETPATH = $(CURDIR)/$(TARGET)
-export TARGETDIR = /media/fastData/IDEA16_exp/
 export DOMAKE     = $(MAKE) --no-print-directory
 TESTMODELSPATH    = testmodels
 TESTBENCHPATH     = testbench
@@ -68,7 +67,7 @@ help:
 	@printf "Usage:"
 	@printf
 	@printf "make:       same as 'make build'"
-	@printf "make build: builds the entire adse"
+	@printf "make build: builds the entire tool"
 	@printf "make docs:  generates the Doxygen API"
 
 $(TARGET):

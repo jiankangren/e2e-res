@@ -40,8 +40,8 @@ int main(int argc, char ** argv)
 	for(unsigned int i=0;i<tasks.size();i++)
 	{
 		cout << *tasks[i]	<< endl;
-		if(tasks[i]->node > no_nodes)
-			no_nodes = tasks[i]->node;
+		if(tasks[i]->get_node() > no_nodes)
+			no_nodes = tasks[i]->get_node();
 	}
 	
 	cout << "The system has " << no_nodes << " nodes\n";
@@ -58,6 +58,7 @@ int main(int argc, char ** argv)
 	cout << messageStart + "Creating an application object ... " << endl;
 	Application * application = new Application(transactions);
 	cout << *application;
+	application->schedulability(0, 0);
 	
 	cout << messageStart + "Creating a constraint model object ... " << endl;
 	CP_model* model = new CP_model(application, settings, no_nodes);	

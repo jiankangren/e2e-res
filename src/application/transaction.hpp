@@ -36,6 +36,7 @@ public:
 	 */  
 	double get_utilization(int n);
 	void Build_transaction(vector<Task*> all_tasks);
+	 
 	
 	friend std::ostream& operator<< (std::ostream &out, const Transaction &trans);
 	

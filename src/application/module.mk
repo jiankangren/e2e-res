@@ -1,3 +1,4 @@
+
 # Copyright (c) 2014, Gabriel Hjort Blindell <ghb@kth.se>
 # All rights reserved.
 #
@@ -28,7 +29,7 @@
 # MODULE PATH AND FILES
 #=======================
 
-CPP_FILES := task.cpp transaction.cpp application.cpp
+CPP_FILES := task.cpp transaction.cpp application.cpp resource.cpp
              
 
 
