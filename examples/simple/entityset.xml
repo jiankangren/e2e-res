@@ -30,4 +30,14 @@
 		<memCons>5</memCons>
 		<execution>50</execution>
 	</periodicTask>
+	<message>
+		<id>3</id>
+		<node>2</node>
+		<number>1</number>
+		<type>two</type>
+		<period>200</period>
+		<deadline>200</deadline>
+		<memCons>5</memCons>
+		<execution>50</execution>
+	</message>
 </taskset>

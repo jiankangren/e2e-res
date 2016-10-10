@@ -17,7 +17,7 @@ std::ostream& operator<< (std::ostream &out, const Resource &resource)
 	return out;
 }
 
-int Resource::sbf(int time)
+int Resource::sbf_proc(int time)
 {
 	int supply = 0;
 	int delta = 2 * (pi - theta);
@@ -36,6 +36,21 @@ int Resource::sbf(int time)
 		supply = (sK + 1) * theta;
 	}
 	return supply;
+}
+int Resource::sbf_net(int time, int idle)
+{
+	int sbf = 0;
+    if (time >= pi - theta - idle)
+	{
+		int xx = 2 * (pi - theta - idle);
+		int yyDiv = (time - (pi - theta - idle)) / pi;
+		int yy = (int)floor(yyDiv);
+		int maxCalc = time - xx - (yy * pi);
+		if (maxCalc < 0)
+			maxCalc = 0;
+		sbf = maxCalc + (yy * (pi - idle));
+	}
+	return sbf;
 }
 int Resource::get_id()
 {

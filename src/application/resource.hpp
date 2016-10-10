@@ -22,9 +22,15 @@ private:
 public:
 	Resource(int _id, int _theta, int _pi, int _priority);
 	/**
-	 * returns the supply bound function at a given time 
+	 * returns the supply bound function at a given time given that
+	 * the resource belongs to a processor
 	 */
-	 int sbf(int time); 
+	 int sbf_proc(int time); 
+	 /**
+	 * returns the supply bound function at a given time given that
+	 * the resource belongs to a network switch
+	 */
+	 int sbf_net(int time, int idle); 
 	 int get_id();
 	
 };

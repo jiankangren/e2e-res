@@ -40,8 +40,8 @@ int InputReader::count_element_children( xmlNodePtr node )
 		}
 		switch(xmlReadingMode)
 		{
-			case(TASK):
-				parsTaskXMLNode(elements, values, node);
+			case(Entity):
+				parsEntityXMLNode(elements, values, node);
 				break;
 			case(TRANSACTION):
 				parsTransXMLNode(elements, values, node);
@@ -52,17 +52,29 @@ int InputReader::count_element_children( xmlNodePtr node )
 		
 	}
 	
-	void InputReader::parsTaskXMLNode(vector<char*> elements, vector<char*> values, xmlNodePtr node)
+	void InputReader::parsEntityXMLNode(vector<char*> elements, vector<char*> values, xmlNodePtr node)
 	{
 		const xmlChar* taskNodeName = (xmlChar*) "periodicTask";
 		/**
-		 * if the node is a pr task, then create one and push it in the tasks vactor
+		 * if the node is a pr task, then create one and push it in the entity vactor
 		 */ 
 		if ( node->parent && xmlStrEqual(node->parent->name, taskNodeName) == 1)
 		{
-			int taskNumber = atoi(getValueOfElement(elements, values, (char *)"number"));
-			for(int i=0;i<taskNumber;i++)
-				tasks.push_back(new Task(elements, values, i));
+			int task_cnt = atoi(getValueOfElement(elements, values, (char *)"number"));
+			for(int i=0;i<task_cnt;i++)
+				entities.push_back(new Task(elements, values, i));
+			return;
+		}
+		
+		const xmlChar* messageNodeName = (xmlChar*) "message";
+		/**
+		 * if the node is a message, then create one and push it in the entity vactor
+		 */ 
+		if ( node->parent && xmlStrEqual(node->parent->name, messageNodeName) == 1)
+		{
+			int msg_count = atoi(getValueOfElement(elements, values, (char *)"number"));
+			for(int i=0;i<msg_count;i++)
+				entities.push_back(new Message(elements, values, i));
 			return;
 		}
 	}
@@ -115,15 +127,15 @@ int InputReader::count_element_children( xmlNodePtr node )
 		return '\0';
 	}
 	
-	vector<Task*> InputReader::ReadTaskset(const string fileName)
+	vector<RunTime_Entity*> InputReader::ReadEntityset(const string fileName)
 	{
 		
 		string filePath = inputsPath;
 		filePath += fileName;
-		xmlReadingMode = TASK;
+		xmlReadingMode = Entity;
 		readXML(filePath);
 		
-		return tasks;
+		return entities;
 	}
 	
 	vector<Transaction*> InputReader::ReadTransactions(const string fileName)
