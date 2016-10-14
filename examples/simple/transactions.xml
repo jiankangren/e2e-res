@@ -3,15 +3,15 @@
 	<transaction>
 		<id>0</id>
 		<task>1</task>
-		<task>2</task>
+		<task>4</task>
 		<task>3</task>
 		<deadline>120</deadline>
 	</transaction> 		
 	<transaction>
 		<id>1</id>
 		<task>1</task>
+		<task>4</task>
 		<task>2</task>
-		<task>3</task>
 		<deadline>160</deadline>
 	</transaction> 		
 </transactionset>

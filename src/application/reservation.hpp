@@ -23,71 +23,40 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#pragma once
-#include <math.h>
-#include <vector>
-
-#include <gecode/int.hh>
-#include <gecode/set.hh>
-#include <gecode/gist.hh>
-#include <gecode/minimodel.hh>
-
-
-#include "../settings/settings.hpp"
-#include "schedulability.hpp"
-
-
-using namespace Gecode;
-
 /**
- * Gecode space containing the scheduling model based on the paper.
- */
-class CP_model : public Space 
-{
-  
+ * This class encapsulates periodic resource reservations
+ */ 
+
+#include <math.h>
+#include <iostream>
+#include <vector>
+#include <stdio.h>
+#include <string.h>
+#include <boost/math/common_factor.hpp>
+
+using namespace std;
+
+class Reservation{
 private:
-	vector<Base_Transaction*> base_transactions;/**< A vector of pointers to the base transactions. */  
-	Settings*	 			settings;	/**< Pointer to the setting object. */
-
-
-	IntVarArray 			budget;		/**< the budget of resources. */
-	IntVarArray 			period;		/**< the period of resources. */
-	Application* 			application;	
-	int						no_resources;
-  
-public:
-
-	CP_model(vector<Base_Transaction*> _base_transactions, Settings* _settings);
-
-	CP_model(bool share, CP_model& s);
-
-	virtual Space* copy(bool share);
+	int id;			/*!< Resource id. */
+	int theta;		/*!< Resource budget. */
+	int pi;			/*!< Resource period. */
+	int priority;	/*!< Resource priority. */
+	int resource_id;	   /*!< Resource that this reservation belongs to. */
 	
+	friend std::ostream& operator<< (std::ostream &out, const Reservation &reservation);
+public:
+	Reservation();
+	Reservation(int _id, int _theta, int _pi, int _priority, int _node);
 	/**
-	* Prints the variables
-	*/ 
-	void print(std::ostream& out) const;
-	/**
-	* Prints variables for csv output
-	*/ 
-	void printCSV(std::ostream& out) const;
-	/**
-	* Prints mappings and modes for csv output
-	*/ 
-	virtual void constrain(const Space& _b)
-	{
-		const CP_model& b = static_cast<const CP_model&>(_b);
-
-		switch(settings->getOptCriterion())
-		{
-			case(Settings::POWER):
-				//rel(*this, sys_power < b.sys_power);
-				break;
-			default:
-				cout << "unknown optimization criterion !!!\n";
-				throw CException("");
-				break;
-		}   
-	}
-  
+	 * returns the supply bound function at a given time given that
+	 * the resource belongs to a processor
+	 */
+	 int sbf_proc(int time); 
+	 /**
+	 * returns the supply bound function at a given time given that
+	 * the resource belongs to a network switch
+	 */
+	 int sbf_net(int time, int idle); 
+	 int get_resource_id();
 };

@@ -1,23 +1,25 @@
-#include "resource.hpp"
+#include "reservation.hpp"
 
 using namespace std;
-
-Resource::Resource(int _id, int _theta, int _pi, int _priority):
+Reservation::Reservation(){};
+Reservation::Reservation(int _id, int _theta, int _pi, int _priority, int _resource_id):
 id(_id),
 theta(_theta),
 pi(_pi),
-priority(_priority){};
+priority(_priority),
+resource_id(_resource_id){};
 
-std::ostream& operator<< (std::ostream &out, const Resource &resource)
+std::ostream& operator<< (std::ostream &out, const Reservation &reservation)
 {
-	out << " budget= " 	<< resource.theta
-		<< ", period=" 		<< resource.pi 
-		<< ", priority=" 	<< resource.priority;
+	out << " budget= " 	<< reservation.theta
+		<< ", period=" 		<< reservation.pi 
+		<< ", priority=" 	<< reservation.priority
+		<< ", resource=" 	<< reservation.resource_id;
  
 	return out;
 }
 
-int Resource::sbf_proc(int time)
+int Reservation::sbf_proc(int time)
 {
 	int supply = 0;
 	int delta = 2 * (pi - theta);
@@ -37,7 +39,7 @@ int Resource::sbf_proc(int time)
 	}
 	return supply;
 }
-int Resource::sbf_net(int time, int idle)
+int Reservation::sbf_net(int time, int idle)
 {
 	int sbf = 0;
     if (time >= pi - theta - idle)
@@ -52,7 +54,7 @@ int Resource::sbf_net(int time, int idle)
 	}
 	return sbf;
 }
-int Resource::get_id()
+int Reservation::get_resource_id()
 {
-	return id;
+	return resource_id;
 }

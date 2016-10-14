@@ -33,12 +33,12 @@ public:
 	 * reads a file named taskset.xml from the input directory and
 	 * returns a TaskSet object
 	 */ 
-	vector<RunTime_Entity*> ReadEntityset(const string fileName);
+	vector<Base_Entity*> ReadEntityset(const string fileName);
 	/**
 	 * reads a file named transactions.xml from the input directory and
 	 * returns a vector of Transactions
 	 */ 
-	vector<Transaction*> ReadTransactions(const string fileName);
+	vector<Base_Transaction*> ReadTransactions(const string fileName);
 	/**
 	 * reads csv files and 
 	 * returns a two dimentional vector of string
@@ -52,8 +52,8 @@ private:
 	enum 						ReadingModes{Entity, TASK, TRANSACTION, PLATFORM, WCET, CONSTRAINTS};
 	ReadingModes				xmlReadingMode;
 	string 						inputsPath;
-	vector<RunTime_Entity*> 	entities;
-	vector<Transaction*> 		transactions;
+	vector<Base_Entity*> 	entities;
+	vector<Base_Transaction*> 	transactions;
 	
 	void 	walk_tree( xmlNodePtr node );
 	int 	count_element_children( xmlNodePtr node );

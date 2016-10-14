@@ -27,8 +27,7 @@
  * This is the main file for the e2e-res tool
 */
 
-#include "settings/input_reader.hpp"
-#include "execution/execution.cpp"
+#include "test/test.cpp"
 
 
 
@@ -47,54 +46,52 @@ int main(int argc, char ** argv)
 	
 	cout << messageStart + "Reading settings ..." << endl;
 	Settings* settings =  new Settings("./src/settings/settings.cfg");
+	
+	if(settings->IsTest())
+	{
+		Test* test = new Test(settings);
+		test->run_tests();
+		delete test;
+		return 0;
+	}
+	
 	settings->ParseCommandLine(argc, argv); /** in case we want to overwrite on some options from .cfg file. */
 	cout << *settings;
 	
+
 	cout << messageStart + "Creating InputReader object ..." << endl;
 	InputReader* iReader = new InputReader(settings->getInputsPath());
 	cout << *iReader;
 	
 	cout << messageStart + "Reading entities ..." << endl;
-	vector<RunTime_Entity*> entities = iReader->ReadEntityset(entitysetFile);
-	cout <<	"found "	<<	entities.size() << " entities: \n";
-	/**
-	 * Assuming that the "n" nodes are numbered from 0 to "n-1",
-	 * we derive the number of nodes from the task nodes.
-	 */ 
-	int no_nodes = 0;
-	for(unsigned int i=0;i<entities.size();i++)
-	{
-		cout << *entities[i]	<< endl;
-		if(entities[i]->get_node() > no_nodes)
-			no_nodes = entities[i]->get_node();
-	}
-	
-	cout << "The system has " << no_nodes << " nodes\n";
+	vector<Base_Entity*> base_entities = iReader->ReadEntityset(entitysetFile);
+	cout <<	"found "	<<	base_entities.size() << " entities: \n";
 	
 	cout << messageStart + "Reading transactions ..." << endl;
-	vector<Transaction*> transactions = iReader->ReadTransactions(transactionFile);
-	cout <<	"found "	<<	transactions.size() << " transactions: \n";
-	for(unsigned int i=0;i<transactions.size();i++)
+	vector<Base_Transaction*> base_transactions = iReader->ReadTransactions(transactionFile);
+	cout <<	"found "	<<	base_transactions.size() << " transactions: \n";
+	for(unsigned int i=0;i<base_transactions.size();i++)
 	{
-		cout << *transactions[i]	<< endl;
-		transactions[i]->Build_transaction(entities);
+		base_transactions[i]->Build_transaction(base_entities);
 	}	
 	
-	cout << messageStart + "Creating an application object ... " << endl;
-	Application * application = new Application(transactions);
-	cout << *application;
-	application->schedulability(0, 0);
-	
-	cout << messageStart + "Creating a constraint model object ... " << endl;
-	CP_model* model = new CP_model(application, settings, no_nodes);	
-	
-	cout << messageStart + "Creating an execution object ... " << endl;
-	Execution<CP_model> execObj(model, settings);
-	
-	cout << messageStart + "Running the model object ... " << endl;
-	execObj.Execute();
-	
-	cout << messageStart + " e2e-res ended " + messageStart << endl	<< endl;
+	try
+	{
+		cout << messageStart + "Creating a constraint model object ... " << endl;
+		CP_model* model = new CP_model(base_transactions, settings);	
+		
+		cout << messageStart + "Creating an execution object ... " << endl;
+		Execution<CP_model> execObj(model, settings);
+		
+		cout << messageStart + "Running the model object ... " << endl;
+		execObj.Execute();
+		
+		cout << messageStart + " e2e-res ended " + messageStart << endl	<< endl;
+	}
+	catch(std::exception const & e)
+	{
+		cout << e.what() << endl;
+	}
 	return exit_status;	  
 }
  

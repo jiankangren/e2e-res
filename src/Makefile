@@ -67,7 +67,7 @@ PROGRAMS := ../bin/e2e-res
 
 # Defines the application modules for the Gecode solver
 MODULES!../bin/e2e-res := \
-    .  settings application cp_model execution
+    .  settings application cp_model execution test
 
 
 
@@ -76,13 +76,12 @@ MODULES!../bin/e2e-res := \
 #===================
 
 # Flags common to all program builds
-CXXFLAGS += -Wall -std=c++0x -g -O1 -I/usr/include/boost -I/usr/include/sdf3 \
-            -I/usr/include/libxml2 -I.
+CXXFLAGS += -Wall -std=c++0x -g -O1 -I/usr/include/boost -I/usr/include/libxml2 -I.
 LDFLAGS  +=
 LDLIBS   += -L/usr/lib/ -lgecodeint -lgecodeset -lgecodesearch -lgecodekernel \
             -lgecodesupport -lgecodeminimodel -lgecodegist \
             -lsdf3-base -lsdf3-sdf -lxml2 -lboost_system \
-            -lboost_filesystem -lconfig++ application/libsched.a
+            -lboost_filesystem -lconfig++ 
 
 
 

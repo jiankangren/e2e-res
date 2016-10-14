@@ -87,7 +87,7 @@ int InputReader::count_element_children( xmlNodePtr node )
 		 */ 
 		if ( node->parent && xmlStrEqual(node->parent->name, transNodeName) == 1)
 		{
-			transactions.push_back(new Transaction(elements, values));
+			transactions.push_back(new Base_Transaction(elements, values));
 			return;
 		}
 	}
@@ -127,7 +127,7 @@ int InputReader::count_element_children( xmlNodePtr node )
 		return '\0';
 	}
 	
-	vector<RunTime_Entity*> InputReader::ReadEntityset(const string fileName)
+	vector<Base_Entity*> InputReader::ReadEntityset(const string fileName)
 	{
 		
 		string filePath = inputsPath;
@@ -138,7 +138,7 @@ int InputReader::count_element_children( xmlNodePtr node )
 		return entities;
 	}
 	
-	vector<Transaction*> InputReader::ReadTransactions(const string fileName)
+	vector<Base_Transaction*> InputReader::ReadTransactions(const string fileName)
 	{
 		
 		string filePath = inputsPath;

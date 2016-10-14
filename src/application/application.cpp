@@ -2,40 +2,107 @@
 
 using namespace std;
 
-Application::Application(vector<Transaction*> _transactions):
-transactions(_transactions){};
-
+Application::Application(vector<Base_Transaction*> _transactions)
+{
+	init(_transactions);
+};
+void Application::init(vector<Base_Transaction*> _transactions)
+{
+	for (auto trans : _transactions)
+	{
+		/**
+		 * For all base transactions, we create
+		 * a fresh transaction for the application
+		 */ 
+		transactions.push_back(new Transaction(*trans));
+		for (auto entity : trans->get_entities())
+		{
+			set<int> entity_resources = entity->get_resources();
+			resources.insert(entity_resources.begin(), entity_resources.end());
+		}
+	}
+}
+Application::Application(vector<Base_Transaction*> _transactions, vector<Reservation*> _reservations):
+reservations(_reservations)
+{
+	init(_transactions);
+};
+Application::~Application()
+{	
+}
 int Application::get_min_trans_deadline()
 {
-	if(transactions.size() == 0)
+	try
+	{
+	    if(transactions.empty())	
+		{
+			cout << "The application does not have any transactions\n";
+			throw std::runtime_error("Error: no transaction");
+		}			
+	}
+	catch(runtime_error e)
 	{
 		cout << "The application does not have any transactions\n";
-		throw std::runtime_error("Error: no transaction");
+		throw e;
 	}
-	int min_deadline = transactions[0]->deadline;
+	int min_deadline = transactions[0]->base_transaction.get_deadline();
 	for(unsigned int i=1;i<transactions.size();i++)
 	{
-		if(min_deadline > transactions[1]->deadline)
-			min_deadline = transactions[1]->deadline;
+		if(min_deadline > transactions[i]->base_transaction.get_deadline())
+			min_deadline = transactions[i]->base_transaction.get_deadline();
 	}
 	return min_deadline;
 }
 double Application::get_utilization(int n)
 {
 	double utilization = 0.0;
-	for(unsigned int i=1;i<transactions.size();i++)
-	{
-		utilization += transactions[i]->get_utilization(n);
-	}
-	
+	for (auto trans : transactions)
+		utilization += trans->get_utilization(n);	
 	return utilization;
 }
-bool Application::schedulability(int budget, int period)
+bool Application::schedulability()
 {
-	bool schedulabe = false;
-	
-	
-	return schedulabe;
+	for (auto trans : transactions) 
+	{
+		for (auto entity : trans->entities) 
+		{
+			calculateResponseTime(entity);
+			if(entity->get_response_time() > entity->base_entity.get_deadline())
+			{
+				//cout << *entity << " is not schedulable, res time=" << entity->get_response_time() << endl;
+				return false;
+			}	
+		}
+		//cout << "calculating trans res time\n";	
+		trans->calculateTransResponseTime();
+	}
+	/// derive the activation time of tasks and messages in application 
+	deriveActivationInstants();
+
+	/// find all timed path for the transactions within application
+	findAllTimedPaths();
+
+	/// find all reachable timed path among all possible paths for transactions in application 
+	//cout << "finding reachable time paths\n";
+	findReachableTimePaths();
+
+	/// find all fisrt timed paths (for reaction computation) in application 
+	//cout << "finding first time paths\n";
+	findFirstTimePaths();
+
+	/// calculate the age and reaction delays of transaction 't'
+	//cout << "calculating other delays\n";
+	for (auto trans : transactions) 
+	{
+		trans->calculateTransAgeDelay();
+		trans->calculateTransReacDelay();		
+		if(trans->get_response_time() > trans->base_transaction.get_deadline())
+		{
+			//cout << "trans missing deadline\n";
+			return false;
+		}	
+	}
+	return true;
 }
 std::ostream& operator<< (std::ostream &out, const Application &app)
 {
@@ -45,14 +112,31 @@ std::ostream& operator<< (std::ostream &out, const Application &app)
 	{
 		out << *app.transactions[i] << endl;
 	}
+	out << "Application uses the following resources: ";
+	for (auto res : app.resources)
+		out << res << " ";
+ 
+	out << "\nApplication has the following reservations:\n";
+	for (auto res : app.reservations)
+		out << *res << " " << endl;
  
 	return out;
 }
-
+void Application::calculateResponseTime(Entity* entity)
+{
+	if (entity->base_entity.is_task())
+	{
+		calculateTaskResponseTime(*entity);
+	}
+	if (entity->base_entity.is_message())
+	{
+		calculateMessageResponseTime(*entity);
+	}
+}
 int Application::rbf_task(Task &task, int time)
 {
 	int request = 0;
-	int current_node = task.get_node();
+	int current_node = task.get_resource_id();
 	int current_priority = task.get_priority();
 	int current_id = task.get_id();
 	
@@ -60,13 +144,13 @@ int Application::rbf_task(Task &task, int time)
 	{
 		for (auto entity : trans->entities) 
 		{
-			if (entity->is_task() && entity->get_node() == current_node)
+			if (entity->base_entity.is_task() && entity->base_entity.exist_on_resource(current_node))
 			{
-				if (entity->get_id() != current_id)
+				if (entity->base_entity.get_id() != current_id)
 				{
-					if (entity->get_priority() <= current_priority)
+					if (entity->base_entity.get_priority() <= current_priority)
 					{
-						request += entity->get_load(time);
+						request += entity->base_entity.get_load(time);
 					}
 				}
 			}
@@ -86,10 +170,10 @@ int Application::rbf_message(Message &message, int time, int link)
 	{
 		for (auto entity : trans->entities) 
 		{
-			if (entity->is_message())
+			if (entity->base_entity.is_message())
 			{
-				Message* msg = dynamic_cast<Message*>(entity);
-				for (auto link_b : msg->links)
+				Message* msg = dynamic_cast<Message*>(&entity->base_entity);
+				for (auto link_b : msg->get_resources())
 				{
 					if (link == link_b)
 					{
@@ -118,63 +202,65 @@ int Application::rbf_message(Message &message, int time, int link)
 	return rbf;
 }
 
-void  Application::calculateTaskResponseTime(Task &task, int t)
+void  Application::calculateTaskResponseTime(Entity &entity)
 {
-	Resource res = get_resource(task);
+	Task* task = dynamic_cast<Task*>(&entity.base_entity);
+	Reservation res;
+	try
+	{
+		res = get_resource(task->get_resource_id());
+	}
+	catch(std::runtime_error const & e)
+	{
+		throw e;
+	}
 	/// find the response time - we loop for every integer value of time from 0 to period
-	for (int time = 0; time < task.get_period(); time++)
+	for (int time = 0; time < task->get_period(); time++)
 	{
 		/// get the sbf for time
-		int _sbf = res.sbf_proc(time);
+		int _sbf = res.sbf_proc(time);	
 
 		/// compute the rbf for 'time'		
-		int _rbf = rbf_task(task, time);
+		int _rbf = rbf_task(*task, time);
 
 		/// compare the rbf and sbf and extract the response time
 		if (_sbf >= _rbf)
 		{
-			task.set_response_time(time);
-		}
+			entity.set_response_time(time);
+			break;
+		}		
 	}	
 }
 
-Resource& Application::get_resource(RunTime_Entity& entity)
+Reservation& Application::get_resource(int resource_id)
 {
-	for(auto res : resources)
+	for(auto res : reservations)
 	{
-		if(res->get_id() == entity.get_node())
+		if(res->get_resource_id() == resource_id)
 			return *res;
 	}
-	cout << "Did not find any resource matching the task node\n";
+	throw runtime_error("Did not find any resource matching the resource_id " + to_string(resource_id));
 }
-Resource& Application::get_resource(int link)
+void Application::calculateMessageResponseTime(Entity& entity)
 {
-	for(auto res : resources)
-	{
-		if(res->get_id() == link)
-			return *res;
-	}
-	cout << "Did not find any resource matching the task node\n";
-}
-void Application::calculateMessageResponseTime(Message& message)
-{
+	Message* message = dynamic_cast<Message*>(&entity.base_entity);
 	int idle = 0;
-	// for each link that the message crosses through
-	for(auto link_a: message.links)
+	/// for each link that the message crosses through
+	for(auto link_a: message->get_resources())
 	{
 		idle = 0;
 		for (auto trans : transactions) 
 		{
-			for (auto entity: trans->entities) 
+			for (auto ent: trans->entities) 
 			{
-				if(entity->is_message())
+				if(ent->base_entity.is_message())
 				{
-					Message* mess = dynamic_cast<Message*>(entity);
-					for (auto link_b : mess->links)
+					Message* mess = dynamic_cast<Message*>(&ent->base_entity);
+					for (auto link_b : mess->get_resources())
 					{
-						if(mess != &message && link_a == link_b && 
-						   mess->get_priority() <= message.get_priority() &&
-						   mess->is_periodic() == message.is_periodic())
+						if(mess != message && link_a == link_b && 
+						   mess->get_priority() <= message->get_priority() &&
+						   mess->is_periodic() == message->is_periodic())
 						{
 							if(mess->get_execution() > idle)
 								idle = mess->get_execution();
@@ -183,15 +269,23 @@ void Application::calculateMessageResponseTime(Message& message)
 				}
 			}
 		}
-		// find the response time
-		for (int time = 0; time < message.get_period(); time++)
+		/// find the response time
+		for (int time = 0; time < message->get_period(); time++)
 		{
-			Resource res = get_resource(link_a);
+			Reservation res;
+			try
+			{
+				res = get_resource(link_a);
+			}
+			catch(std::runtime_error const & e)
+			{
+				throw e;
+			}
 			int sbf = res.sbf_net(time, idle);
-			int rbf = rbf_message(message, time, link_a);
+			int rbf = rbf_message(*message, time, link_a);
 			if (sbf >= rbf)
 			{
-				message.add_to_response_time(time);
+				entity.add_to_response_time(time);
 				break;
 			}
 		}
@@ -206,7 +300,7 @@ int Application::get_app_LCM()
 	{
 		for (auto entity: trans->entities) 
 		{
-			lcm = LCM(lcm, entity->get_period());
+			lcm = LCM(lcm, entity->base_entity.get_period());
 		}
 	}
 	return lcm;
@@ -237,7 +331,7 @@ void Application::deriveActivationInstants()
 		for (auto entity: trans->entities) 
 		{
 			int fact = 0;
-			while (entity->get_period() * fact <= hyper_LCM)
+			while (entity->base_entity.get_period() * fact <= hyper_LCM)
 			{
 				entity->add_instace(fact);
 				fact++;
@@ -266,19 +360,28 @@ void Application::findReachableTimePaths()
 			///Loop through all messages
 			for (auto tp_entity : tp->tp_entities)
 			{
-			    if(tp_entity->is_message())
+				if(tp_entity->base_entity.is_message()==true)
 			    {
 					forward = 0;
 					forward2 = 0;
 					alphaL = tp_entity->get_activation_time();
 					alphaLL = tp->get_activation_next_entity(tp_entity);
 					delta = tp_entity->get_response_time();
-					if ((alphaLL >= alphaL) && ((alphaLL >= alphaL + delta) || (tp->get_priority_next_entity(tp_entity) > tp_entity->get_priority())))
+					/*
+					   cout << "alphaL=" << alphaL
+						 << " alphaLL=" << alphaL
+						 << " delta=" << alphaL 
+						 << " next prio=" <<tp->get_priority_next_entity(tp_entity)
+						 << "cuurent prio=" <<  tp_entity->get_priority()
+						 << " next_activ_time=" << tp_entity->get_next_activ_time()
+						 << " id=" << tp_entity->get_id() << endl;	
+						 */ 
+					if ((alphaLL >= alphaL) && ((alphaLL >= alphaL + delta) || (tp->get_priority_next_entity(tp_entity) > tp_entity->base_entity.get_priority())))
 					{
 						forward = 1;
 					}
 					alphaLNext = tp_entity->get_next_activ_time();
-					if (!((alphaLL >= alphaLNext) && ((alphaLL >= alphaLNext + delta) || (tp->get_priority_next_entity(tp_entity) > tp_entity->get_priority()))))
+					if (!((alphaLL >= alphaLNext) && ((alphaLL >= alphaLNext + delta) || (tp->get_priority_next_entity(tp_entity) > tp_entity->base_entity.get_priority()))))
 					{
 						forward2 = 1;
 					}
@@ -300,6 +403,7 @@ void Application::findReachableTimePaths()
 			if (valid == 1)
 			{
 				tp->reachable = true;
+				//cout << "tp " << tp->id << " is reachable\n";
 			}				
 		}
 	}
@@ -314,15 +418,19 @@ void Application::findFirstTimePaths()
 		{
 			if(tp_a->reachable)
 			{
-				TimePath* first_tp = tp_a;			
 				for(auto tp_b : trans->time_paths)
 				{
 					if(tp_b->reachable)
 					{
-						if(first_tp->get_first_instant() == tp_b->get_first_instant() &&
-							tp_b->get_last_instant() <= first_tp->get_last_instant())
+						/*cout << "tp_a->get_first_instant()=" << tp_a->get_first_instant()
+						     << " tp_b->get_first_instant()=" << tp_b->get_first_instant() 
+						     << " tp_b->get_last_instant()=" << tp_b->get_last_instant()
+						     << " tp_a->get_last_instant()" << tp_a->get_last_instant()
+						     << endl;*/
+						if(tp_a->get_first_instant() == tp_b->get_first_instant() &&
+							tp_b->get_last_instant() <= tp_a->get_last_instant())
 							{
-								first_tp->is_first = false;
+								tp_a->is_first = false;
 								tp_b->is_first = true;
 							}
 						
@@ -333,3 +441,23 @@ void Application::findFirstTimePaths()
 	}
 }
 
+int Application::no_resources()
+{
+	return resources.size();
+}
+void Application::set_reservations(vector<Reservation*> _reservations)
+{
+	reservations = _reservations;
+}
+int Application::get_response_time(Base_Entity& _entity)
+{
+	for (auto trans : transactions)
+	{
+		for (auto entity : trans->entities)
+		{
+			if(&entity->base_entity == &_entity)
+				return entity->get_response_time();
+		}
+	}
+	throw runtime_error("get_response_time did not find the entity");
+}

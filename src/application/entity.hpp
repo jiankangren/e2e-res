@@ -23,10 +23,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/**
- * This class encapsulates runtime entities
- */ 
-
 #include <math.h>
 #include <iostream>
 #include <vector>
@@ -34,9 +30,13 @@
 #include <string.h>
 #include <boost/math/common_factor.hpp>
 #include <exception>
-using namespace std;
+#include <set>
 
-class RunTime_Entity{
+using namespace std;
+/**
+ * This class encapsulates the base information of runtime entities
+ */ 
+class Base_Entity{
 private:
 	int phase;
 	int period;
@@ -49,73 +49,89 @@ private:
 	int memCons;
 	bool preemtable;
 	int jitter;		 	/*!< Task jitter. */
-	int node;		 	/*!< Task node. We assume that the entities are already mapped on processors.*/
 	int execution; 		/*!< Task execution time on its node.*/
-	
-	int response_time;	/*!< The response time of entities, this has to be set by the analysis.*/
-
 	bool periodic;	/*!< True if the entity is released periodically.*/
-	vector<int> instances; /*!< activation instance of the entity. */
-	
-public:
-	RunTime_Entity(int _phase, int _period, int _deadline, int _mem, int _cS, int _priority, string _name, string _type, int _id);
-
-	RunTime_Entity(int _period, int _mem, int _cS, string _name, string _type, int _id);
-	
+	bool is_task_type;/*! is true when the entity is a task. */
+	bool is_message_type;/*! is true when the entity is a message. */
+	set<int> resources;	/*!< A set of resources that is accessed by the entity
+								A task can only have one resource, while a message can have multiple resources (links).*/    								
+public:    
 	/**
 	 * constructs a periodic entity using vectors of elements and values
 	 * to be used for reading entities from xml files
 	 */ 
-	RunTime_Entity(vector<char*> elements, vector<char*> values, int number);
-
+	Base_Entity(vector<char*> elements, vector<char*> values, int number);
+	Base_Entity(vector<char*> elements, vector<char*> values, int number, bool _is_task, bool _is_message);
+	Base_Entity(int _id, int _period, int _priority, set<int> _resources, int _exec, bool _is_task, bool _is_message);
+	virtual ~Base_Entity(){};
 	/**
 	 * returns the entity utilization
 	 */
+	 /**
+	  * Copy constructor.
+	  * It resets all variables that are affected by the schedulability analysis.
+	  */ 
+	 Base_Entity(const Base_Entity& _entity);
 	 double get_utilization(); 
 	 /**
 	  * returns the entity load at a given time point
 	  */
-	int count; /*! stores the entity instance that is relevant for the analysis.*/	  
 	int get_load(int time); 
-	int get_node();
+	set<int> get_resources();
+	bool exist_on_resource(int resource_id); /*! returns true if entity exists on resource with id equal to resource_id.*/
 	int get_id();
 	int get_priority();
+	int get_deadline();
 	int get_execution();
 	int get_period();
-	int get_response_time();
-	void set_response_time(int _response_time);
-	virtual bool is_task()const{return false;};
-	virtual bool is_message()const{return false;};
+	bool is_task()const{return is_task_type;};
+	bool is_message()const{return is_message_type;};
 	bool is_periodic(){return periodic;};
-	void add_instace(int new_instance);
-	int get_instance(int indx);
-	int get_instanc_size(){return instances.size();};
-	friend std::ostream& operator<< (std::ostream &out, const RunTime_Entity &entity);
+	friend std::ostream& operator<< (std::ostream &out, const Base_Entity &entity);
 	
 };
 
-class Task : public RunTime_Entity
+class Entity
 {
+private:	
+	int response_time;	/*!< The response time of entities, this has to be set by the analysis.*/
+	vector<int> instances; /*!< activation instance of the entity. */
+	
 public:
-    Task(vector<char*> elements, vector<char*> values, int number): RunTime_Entity(elements, values, number)
-    {}
-    bool is_task()const{return true;}
+	Base_Entity& base_entity;/*!< Reference to the base entity.*/
+	int count; /*! stores the entity instance that is relevant for the analysis.*/	  
+	Entity(Base_Entity& _base_entity);
+	void add_instace(int new_instance);
+	void set_response_time(int _response_time);
+	int get_instance(int indx);
+	int get_response_time();
+	int get_instanc_size(){return instances.size();};
+	void add_to_response_time(int _res_time);	
+	friend std::ostream& operator<< (std::ostream &out, const Entity &entity);	
 };
-
-class Message : public RunTime_Entity
+class Task : public Base_Entity
 {
 public:
-    Message(vector<char*> elements, vector<char*> values, int number): RunTime_Entity(elements, values, number)
-    {}
-    bool is_message()const{return true;};
-    void add_to_response_time(int _res_time)
+    Task(vector<char*> elements, vector<char*> values, int number): Base_Entity(elements, values, number, true, false){}
+    Task(int _id, int _period, int _priority, set<int> _resources, int _exec):Base_Entity(_id, _period, _priority, _resources, _exec, true, false)
     {
-		set_response_time(_res_time + get_response_time());
-	};
-    vector<int> links;	/*!< A set of links that the message crosses.*/
+		if(_resources.size() != 1)
+			cout << " A task can only use one resource, while task[" << _id
+			     << "] uses " << _resources.size() << " resources\n"; 
+	}
+    int get_resource_id(){return *get_resources().begin();};
+    virtual ~Task(){};
 };
 
-class TimePathEntity : public RunTime_Entity
+class Message : public Base_Entity
+{
+public:
+    Message(vector<char*> elements, vector<char*> values, int number): Base_Entity(elements, values, number, false, true){}
+    Message(int _id, int _period, int _priority, set<int> _resources, int _exec):Base_Entity(_id, _period, _priority, _resources, _exec, false, true){}
+	virtual ~Message(){};
+};
+
+class TimePath_Entity : public Entity
 {
 private:
 	int instant;
@@ -123,27 +139,31 @@ private:
 	int next_activ_time;
 	
 public:	
-	TimePathEntity(RunTime_Entity& entity) : RunTime_Entity(entity)
-	{
-		instant = 0;
-		activation_time = 0;
-		next_activ_time = 0;
-	}
-	void set_instant(int _instant){instant = _instant;};
+	TimePath_Entity(Entity& entity) : Entity(entity),
+	instant(0),
+	activation_time(0),
+	next_activ_time(0){}
+	void set_instant(Entity* entity){instant = entity->count + 1;};
 	int get_instant(){return instant;};
 	int get_activation_time(){return activation_time;};
 	int get_next_activ_time(){return next_activ_time;};
-	
-	void set_next_active_time()
+
+	void set_next_active_time(Entity* entity)
 	{
-		if (count + 1 < get_instanc_size())
+		if (entity->count + 1 < entity->get_instanc_size())
 		{
-			next_activ_time = get_instance(count + 1);
+			next_activ_time = entity->get_instance(entity->count + 1);
 		}
 		else
 		{
-			next_activ_time = get_instance(count) + get_period();
+			next_activ_time = entity->get_instance(entity->count) + entity->base_entity.get_period();
 		}
+	};
+	void set_activation_time(Entity* entity)
+	{
+		if(entity->count > entity->get_instanc_size() || entity->count < 0)
+			{cout << "count=" << entity->count << " is out of range\n";return;}
+		activation_time = get_instance(entity->count);
 	};
 };
 
@@ -153,10 +173,11 @@ public:
 	bool reachable = false;
 	bool is_first = false;
 	bool is_pred = false;
+	int  id = -1;
 	TimePath* pred_tp = nullptr;
-	void add_time_path_enity(TimePathEntity* tp_entity){tp_entities.push_back(tp_entity);};
-	vector<TimePathEntity*> tp_entities;	
-	int get_activation_next_entity(TimePathEntity* _tp_entity)
+	void add_time_path_enity(TimePath_Entity* tp_entity){tp_entities.push_back(tp_entity);};
+	vector<TimePath_Entity*> tp_entities;	
+	int get_activation_next_entity(TimePath_Entity* _tp_entity)
 	{
 		bool found = false;
 		for (auto tp_entity : tp_entities)
@@ -168,13 +189,13 @@ public:
 		}
 		return -1;
 	}
-	int get_priority_next_entity(TimePathEntity* _tp_entity)
+	int get_priority_next_entity(TimePath_Entity* _tp_entity)
 	{
 		bool found = false;
 		for (auto tp_entity : tp_entities)
 		{
 			if(found)
-				return tp_entity->get_priority();
+				return tp_entity->base_entity.get_priority();
 			if(_tp_entity == tp_entity)
 				found = true;			
 		}
@@ -182,19 +203,47 @@ public:
 	}
 	int get_first_instant()
 	{
-		return (*tp_entities.begin())->get_instant();
+		try
+		{
+		    return (*tp_entities.begin())->get_instant();
+		}
+		catch(exception& e)
+		{
+			cout << "get_first_instant failed \n";
+		}    
 	}
 	int get_last_instant()
 	{
-		return (*tp_entities.end())->get_instant();
+		try
+		{
+			return (*tp_entities.back()).get_instant();
+		}
+		catch(exception& e)
+		{
+			cout << "get_last_instant failed \n";
+		}
 	}
 	int get_first_activation_time()
 	{
-		return (*tp_entities.begin())->get_next_activ_time();
+		try
+		{
+			return (*tp_entities.begin())->get_next_activ_time();
+		}
+		catch(exception& e)
+		{
+			cout << "get_first_activation_time failed \n";
+		}
 	}
 	int get_last_activation_time()
 	{
-		return (*tp_entities.end())->get_next_activ_time();
+		try
+		{
+			return (*tp_entities.back()).get_next_activ_time();
+		}
+		catch(exception& e)
+		{
+			cout << "get_last_activation_time failed \n";
+		}
 	}
 	int get_pred_first_activation_time()
 	{

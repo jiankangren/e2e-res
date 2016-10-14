@@ -6,7 +6,7 @@
 		<type>one</type>
 		<period>100</period>
 		<deadline>100</deadline>
-		<execution>50</execution>
+		<execution>5</execution>
 		<node>0</node>
 		<memCons>5</memCons>
 	</periodicTask> 	
@@ -18,26 +18,29 @@
 		<period>200</period>
 		<deadline>200</deadline>
 		<memCons>5</memCons>
-		<execution>50</execution>
+		<execution>5</execution>
 	</periodicTask>
 	<periodicTask>
 		<id>3</id>
 		<node>2</node>
 		<number>1</number>
 		<type>two</type>
-		<period>200</period>
-		<deadline>200</deadline>
+		<period>50</period>
+		<deadline>50</deadline>
 		<memCons>5</memCons>
-		<execution>50</execution>
+		<execution>8</execution>
 	</periodicTask>
 	<message>
-		<id>3</id>
-		<node>2</node>
+		<id>4</id>
+		<node>4</node>
 		<number>1</number>
 		<type>two</type>
+		<priority>2</priority>
 		<period>200</period>
 		<deadline>200</deadline>
 		<memCons>5</memCons>
-		<execution>50</execution>
+		<execution>10</execution>
+		<link>3</link>
+		<link>4</link>
 	</message>
 </taskset>

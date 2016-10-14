@@ -28,23 +28,18 @@
  */ 
 
 #include "transaction.hpp"
-#include "resource.hpp"
+#include "reservation.hpp"
 #include <stdexcept>
 
-extern "C" {
-  // Get declaration for f(int i, char c, float x)
-  /**
-   * (1) gcc -Wall -c *.c
-   * (2) ar -cvq libsched.a analysis.o
-   */ 
-
-  int perform_analysis();
-}
 using namespace std;
 
 class Application{
 public:
-	Application(vector<Transaction*> _transactions);
+	Application(vector<Base_Transaction*> _transactions);
+	Application(vector<Base_Transaction*> _transactions, vector<Reservation*> _reservations);
+	~Application();
+	void init(vector<Base_Transaction*> _transactions);
+	set<int> resources;
 	/**
 	 * Returns the minimum deadline among all transactions.
 	 */ 
@@ -54,13 +49,18 @@ public:
 	 */
 	double get_utilization(int n); 
 	/**
-	 * performs schedulability based on the input budget and input period
+	 * performs schedulability 
 	 */
-	bool schedulability(int budget, int period);
-
+	bool schedulability();
+	
+	int no_resources();
+	
+	void set_reservations(vector<Reservation*> _reservations);
+	
+	int get_response_time(Base_Entity& entity);
 private:
 	vector<Transaction*> transactions;	/*!< The set of transactions that compose the application.*/
-	vector<Resource*> resources;	/*!< The set of transactions that compose the application.*/
+	vector<Reservation*> reservations;	/*!< The set of resource reservations that belong to this application.*/
 	
 	/**
 	 * @param [in] task: task under analysis.
@@ -68,19 +68,20 @@ private:
 	 * 
 	 * Calculates the response time of the input task and sets it.
 	 */
-	void calculateTaskResponseTime(Task &task, int time); 	
+	void calculateTaskResponseTime(Entity &entity); 	
 	/**
 	 * @param [in] message: message under analysis.
 	 * 
 	 * Calculates the response time of the input message and sets it.
 	 */
-	void calculateMessageResponseTime(Message& message); 
+	void calculateMessageResponseTime(Entity& entity); 
 	/**
 	 * @param [in] task: task under analysis.
 	 * @param trans: transaction that task belongs to.
 	 * 
 	 * Returns the request bound function for input task at a given time
 	 */
+	void calculateResponseTime(Entity* entity);
 	int rbf_task(Task &task, int trans);  
 	/**
 	 * @param [in] message: the message under analysis.
@@ -91,11 +92,10 @@ private:
 	 */
 	int rbf_message(Message &message, int time, int link);
 	/**
-	 * @param task that we want its resource
+	 * @param resource_id is the id of resource that reservation belongs to
 	 * @return the reference to the respurce that task uses
 	 */ 
-	Resource& get_resource(RunTime_Entity& entity);
-	Resource& get_resource(int link);
+	Reservation& get_resource(int resource_id);
 	/**
 	 * returns the LCM of the period all tasks and messages in the application.
 	 */ 

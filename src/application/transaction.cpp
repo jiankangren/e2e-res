@@ -2,7 +2,21 @@
 
 using namespace std;
 
-Transaction::Transaction(){};
+Transaction::Transaction(Base_Transaction& _base_transaction):
+base_transaction(_base_transaction),
+response_time(-1),
+reaction_delay(-1),
+age_delay(-1)
+{
+	/**
+	 * We create a fresh vector of entities using the
+	 * base entities from the base_transaction.
+	 */ 
+	for (auto entity : base_transaction.get_entities())
+	{
+		entities.push_back(new Entity(*entity));
+	}
+};
 Transaction::~Transaction()
 {
 	for (auto entity : entities)
@@ -11,7 +25,15 @@ Transaction::~Transaction()
 	for (auto path : time_paths)
 		delete path;
 };
-Transaction::Transaction(vector<char*> elements, vector<char*> values):
+Base_Transaction::Base_Transaction(int _id, vector<int> _entity_ids, vector<Base_Entity*> _entities, int _deadline):
+id(_id),
+entity_ids(_entity_ids),
+deadline(_deadline)
+{
+	Build_transaction(_entities);
+};
+
+Base_Transaction::Base_Transaction(vector<char*> elements, vector<char*> values):
 id(0)
 {
 	for(unsigned int i=0;i< elements.size();i++)
@@ -20,6 +42,8 @@ id(0)
 		{			
 			if(strcmp(elements[i], "task") == 0)
 				entity_ids.push_back(atoi(values[i]));	
+			if(strcmp(elements[i], "message") == 0)
+				entity_ids.push_back(atoi(values[i]));		
 			if(strcmp(elements[i], "id") == 0)
 				id = atoi(values[i]);				
 			if(strcmp(elements[i], "deadline") == 0)
@@ -35,28 +59,28 @@ id(0)
 		}
 	}
 };
-void Transaction::Build_transaction(vector<RunTime_Entity*> all_entities)
+void Base_Transaction::Build_transaction(vector<Base_Entity*> all_entities)
 {
 	if(entity_ids.size() == 0)
 	{
 		cout << "The transaction is empty \n";
 		return;
 	}
-	for(unsigned j=0;j<entity_ids.size();j++)
+	for (auto id : entity_ids)
 	{
-		bool entity_j_found = false;
-		for(unsigned i=0;i<entity_ids.size();i++)
+		bool entity_found = false;
+		for(auto entity : all_entities)
 		{
-			if(all_entities[i]->get_id() == entity_ids[j])
+			if(entity->get_id() == id)
 			{
-				entities.push_back(all_entities[i]);
-				entity_j_found = true;
+				entities.push_back(entity);
+				entity_found = true;
 				break;
 			}
 		}
-		if(!entity_j_found)
+		if(!entity_found)
 		{
-			cout << "error: entity " << entity_ids[j] << " is not defined\n";
+			cout << "error: entity " << id << " is not defined\n";
 			return;
 		}
 	}
@@ -64,25 +88,31 @@ void Transaction::Build_transaction(vector<RunTime_Entity*> all_entities)
 double Transaction::get_utilization(int n)
 {
 	double utilization = 0.0;
-	for(unsigned int i=0;i<entities.size();i++)
+	for (auto base_entity : base_transaction.get_entities())
 	{
-		if(entities[i]->get_node() == n)
+		if(base_entity->exist_on_resource(n))
 		{
-			utilization += entities[i]->get_utilization();
+			utilization += base_entity->get_utilization();
 		}
 	}
-	
 	return utilization;
+}
+int Transaction::get_response_time()
+{
+	return response_time;
 }
 std::ostream& operator<< (std::ostream &out, const Transaction &trans)
 {
-	out << " Transaction: [" 		<< trans.id 		<< "]: ";
-	for(unsigned int i=0;i<trans.entity_ids.size();i++)
+	out << " Transaction: [" 		<< trans.base_transaction.get_id() 		<< "]: ";
+	for(unsigned int i=0;i<trans.base_transaction.get_entity_ids().size();i++)
 	{
-		out << trans.entity_ids[i];
-		if(i+1 < trans.entity_ids.size())
+		out << trans.base_transaction.get_entity_ids()[i];
+		if(i+1 < trans.base_transaction.get_entity_ids().size())
 			out << " -> ";
-	}	 
+	}	
+	out << " response time: " << trans.response_time 
+	    << " age_delay="      << trans.age_delay
+	    << " reaction_delay=" << trans.reaction_delay; 
 	return out;
 }
 
@@ -97,6 +127,7 @@ void Transaction::calculateTransResponseTime()
 void Transaction::add_time_path(TimePath* _time_path)
 {
 	time_paths.push_back(_time_path);
+	_time_path->id = time_paths.size();
 }
 
 void Transaction::findAllTimedPaths()
@@ -107,22 +138,24 @@ void Transaction::findAllTimedPaths()
 		no_time_paths *= entity->get_instanc_size();	
 	}
 	/// we loop for the total number of timed paths
+	//cout << "no_time_paths=" << no_time_paths << endl;
 	for (int p = 0; p < no_time_paths; p++)
 	{
 		TimePath* new_time_path = new TimePath();
 		add_time_path(new_time_path);
 		for (auto entity: entities) 
 		{
-			TimePathEntity* new_tp_entity =  new TimePathEntity(*entity);
+			TimePath_Entity* new_tp_entity =  new TimePath_Entity(*entity);
 			new_time_path->add_time_path_enity(new_tp_entity);
 			adjust_count(entity);
-			new_tp_entity->set_instant(entity->count + 1);
-			new_tp_entity->set_next_active_time();			
+			new_tp_entity->set_activation_time(entity);
+			new_tp_entity->set_instant(entity);
+			new_tp_entity->set_next_active_time(entity);			
 		}
 		entities[0]->count++;
 	}
 }
-void Transaction::adjust_count(RunTime_Entity* entity)
+void Transaction::adjust_count(Entity* entity)
 {
 	if(entity->count == -1)
 	{
@@ -135,7 +168,7 @@ void Transaction::adjust_count(RunTime_Entity* entity)
 		increament_next_entity_count(entity);
 	}
 }
-void Transaction::increament_next_entity_count(RunTime_Entity* _entity)
+void Transaction::increament_next_entity_count(Entity* _entity)
 {
 	bool found = false;
 	if(_entity == *entities.end())
@@ -214,7 +247,7 @@ void Transaction::calculateTransReacDelay()
 					}
 				}
 			}
-			///The C code uses tp_b here!!!
+			///[TODO] [Nima] The C code uses tp_b here!!!
 			tp_a->pred_tp = pred_tp;
 		}
 	}
@@ -224,12 +257,13 @@ void Transaction::calculateTransReacDelay()
 		if(tp->is_first)
 		{
 			///Shouldn't this be based on delay rather than L2Fdelay
-			reacDelay = L2Fdelay + tp->get_first_activation_time() - tp->get_pred_first_activation_time();
+			reacDelay = delay + tp->get_first_activation_time() - tp->get_pred_first_activation_time();
 			if (reacDelay > rDelay)
 			{
 				rDelay = reacDelay;
 			}
 		}
 	}
-	reaction_delay = reacDelay;
+	///Changed this from reacDelay to rDelay
+	reaction_delay = rDelay;
 }

@@ -258,6 +258,23 @@ using namespace std;
 			cerr << "No 'inputs' setting in configuration file." << endl;
 		}
 		/**
+		 *  Get debug mode setting.
+		 */ 
+		try
+		{
+			string debugStr = cfg.lookup("test");
+			if(debugStr.compare("TRUE") == 0)
+				test = 1;
+			else
+				test = 0;
+						
+		}
+		catch(const SettingNotFoundException &nfex)
+		{
+			cerr << "No 'inputs' setting in configuration file." << endl;
+		}
+
+		/**
 		 * Get min period
 		 */
 		try
@@ -275,6 +292,10 @@ using namespace std;
 	int Settings::IsDebug()
 	{
 		return debug;
+	}
+	int Settings::IsTest()
+	{
+		return test;
 	}
 	void Settings::ParseCommandLine(int argc, char ** argv)
 	{
@@ -343,7 +364,8 @@ using namespace std;
 		out << "search:" 	<< settings.getSearchTypeString() 	<< endl;
 		out << "criterion:" << settings.getOptCriterionString() << endl;
 		out << "inputsPath:" << settings.getInputsPath() 		<< endl;
-	 
+		if(settings.test)
+			out << "running the test cases\n";
 		return out;
 	}
 

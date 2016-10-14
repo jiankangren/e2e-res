@@ -29,7 +29,7 @@
 # MODULE PATH AND FILES
 #=======================
 
-CPP_FILES := entity.cpp transaction.cpp application.cpp resource.cpp
+CPP_FILES := entity.cpp transaction.cpp application.cpp reservation.cpp
              
 
 

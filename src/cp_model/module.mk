@@ -28,7 +28,7 @@
 # MODULE PATH AND FILES
 #=======================
 
-CPP_FILES := cp_model.cpp
+CPP_FILES := cp_model.cpp schedulability.cpp
 
 
 

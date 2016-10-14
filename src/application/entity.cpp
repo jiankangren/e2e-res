@@ -1,36 +1,23 @@
 #include "entity.hpp"
-
 using namespace std;
-
-RunTime_Entity::RunTime_Entity(int _phase, int _period, int _deadline, int _mem, int _cS, int _priority, string _name, string _type, int _id):
-phase(_phase),
-period(_period),
-deadline(_deadline),
-codeSize(_cS),
-priority(_priority),
-name(_name),
-type(_type),
-id(_id),
-memCons(_mem),    
-preemtable(true),
-response_time(-1),
-count(-1){};
-
-RunTime_Entity::RunTime_Entity(int _period, int _mem, int _cS, string _name, string _type, int _id):
+Base_Entity::Base_Entity(int _id, int _period, int _priority, set<int> _resources, int _exec, bool _is_task, bool _is_message):
 phase(0),
 period(_period),
 deadline(_period),
-codeSize(_cS),
-priority(0),
-name(_name),
-type(_type),
+codeSize(0),
+priority(_priority),
+name(""),
+type(""),
 id(_id),
-memCons(_mem),
+memCons(0),
 preemtable(true),
-response_time(-1),
-count(-1){};
-
-RunTime_Entity::RunTime_Entity(vector<char*> elements, vector<char*> values, int number):
+jitter(0),
+resources(_resources),
+execution(_exec),
+periodic(true),
+is_task_type(_is_task),
+is_message_type(_is_message){}
+Base_Entity::Base_Entity(vector<char*> elements, vector<char*> values, int number):
 phase(0),
 period(0),
 deadline(0),
@@ -40,9 +27,7 @@ name(""),
 type(""),
 id(0),
 preemtable(true),
-response_time(-1),
-periodic(true),
-count(-1)
+periodic(true)
 {
 	for(unsigned int i=0;i< elements.size();i++)
 	{
@@ -52,7 +37,7 @@ count(-1)
 				phase = atoi(values[i]);
 			
 			if(strcmp(elements[i], "node") == 0)
-				node = atoi(values[i]);
+				resources.insert(atoi(values[i]));
 				
 			if(strcmp(elements[i], "jitter") == 0)
 				jitter = atoi(values[i]);
@@ -94,6 +79,8 @@ count(-1)
 				else
 					periodic = false;
 			}
+			if(strcmp(elements[i], "link") == 0)
+				resources.insert(atoi(values[i]));
 				
 		}				
 		catch(std::exception const & e)
@@ -103,7 +90,21 @@ count(-1)
 	}
 };
 
-std::ostream& operator<< (std::ostream &out, const RunTime_Entity &entity)
+
+
+Base_Entity::Base_Entity(vector<char*> elements, vector<char*> values, int number, bool _is_task, bool _is_message): 
+Base_Entity(elements, values, number)
+{
+	is_task_type    =_is_task;
+	is_message_type = _is_message;
+}
+
+Base_Entity::Base_Entity(const Base_Entity& _entity)
+{
+;
+}
+
+std::ostream& operator<< (std::ostream &out, const Base_Entity &entity)
 {
 	string type = "unknown";
 	if(entity.is_task()==true) type = "task";
@@ -111,60 +112,87 @@ std::ostream& operator<< (std::ostream &out, const RunTime_Entity &entity)
 	out << " entity:" 		<< entity.name 		<< "[id=" 	<< entity.id
 		<< ", type=" 		<< entity.type 
 		<< " is a "         << type
-		<< ", priority=" 	<< entity.priority
-		<< ", node=" 		<< entity.node
-		<< "](" 			<< entity.period 		<< ", " 	<< entity.deadline << ")";
- 
+		<< ", priority=" 	<< entity.priority;
+	for (auto res: entity.resources)
+		out << ", res=" 		<< res;
+	out	<< "](" 			<< entity.period 		<< ", " 	
+	    << entity.deadline << ", "
+	    << entity.execution << ")"; 
 	return out;
 }
 
-double RunTime_Entity::get_utilization()
+double Base_Entity::get_utilization()
 {
 	return ((double) execution)/period;
 }
 
-int RunTime_Entity::get_node()
+set<int> Base_Entity::get_resources()
 {
-	return node;
+	return resources;
 }
-int RunTime_Entity::get_period()
+int Base_Entity::get_period()
 {
 	return period;
 }
-int RunTime_Entity::get_id()
+int Base_Entity::get_deadline()
+{
+	return deadline;
+}
+int Base_Entity::get_id()
 {
 	return id;
 }
-int RunTime_Entity::get_priority()
+int Base_Entity::get_priority()
 {
 	return priority;
 }
-int RunTime_Entity::get_execution()
+int Base_Entity::get_execution()
 {
 	return execution;
 }
-int RunTime_Entity::get_load(int time)
+int Base_Entity::get_load(int time)
 {
 	return ((time + jitter)/period)*execution;
 }
-void RunTime_Entity::set_response_time(int _response_time)
+bool Base_Entity::exist_on_resource(int resource_id)
 {
-	if(_response_time > 0 )
-		response_time = _response_time;
+	return resources.find(resource_id) != resources.end();
 }
-int RunTime_Entity::get_response_time()
+
+Entity::Entity(Base_Entity& _base_entity):base_entity(_base_entity)
+{
+	response_time = -1;	
+	count = -1;
+};
+void Entity::add_instace(int new_instance)
+{
+	instances.push_back(base_entity.get_period() * new_instance);
+}
+int Entity::get_instance(int indx)
+{
+	return instances[indx];
+}
+
+void Entity::add_to_response_time(int _res_time)
+{
+	set_response_time(_res_time + get_response_time());
+};
+int Entity::get_response_time()
 {
 	if(response_time > 0 )
 		return response_time;
 	else
 		return -1;
 }
-void RunTime_Entity::add_instace(int new_instance)
+void Entity::set_response_time(int _response_time)
 {
-	instances.push_back(period * new_instance);
-}
-int RunTime_Entity::get_instance(int indx)
-{
-	return instances[indx];
+	if(_response_time > 0 )
+		response_time = _response_time;
 }
 
+std::ostream& operator<< (std::ostream &out, const Entity &entity)
+{
+	out << entity.base_entity 
+		<< "response time: "<< entity.response_time;
+	return out;
+}

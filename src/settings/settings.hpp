@@ -49,6 +49,10 @@ public:
 	 */ 
 	int IsDebug();
 	/**
+	 * returs 1 if the test is debug
+	 */ 
+	int IsTest();
+	/**
 	 * Returns the luby scale
 	 */
 	unsigned long int getLubyScale(); 	
@@ -72,6 +76,7 @@ private:
 	string 	inputsPath;
 	string 	outputsPath;
 	int 	debug;
+	int     test;
 	unsigned long int 	luby_scale;
 	unsigned long int 	timeout;			/**< Search timeout. */
 	int 				min_period;			/*!< minimum allowed period. */

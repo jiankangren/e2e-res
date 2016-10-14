@@ -37,26 +37,40 @@
 #include "entity.hpp"
 
 using namespace std;
-
-class Transaction{
-public:
+class Base_Transaction
+{
+private:
 	int id;										/*! The id of transaction.*/
-	vector<RunTime_Entity*> 	entities;		/*!< A set of pointers pointing to the tasks and messages.*/
+	vector<Base_Entity*>	entities;           		/*!< A set of pointers pointing to the tasks and messages.*/
 	vector<int> 	entity_ids;					/*!< The sequence of tasks and messages based on their ids.*/
 	int				deadline;					/*!< The end-to-end deadline of transaction.*/
 	int				age_delay_deadline;			/*!< The age_delay_deadline deadline of transaction.*/
-	int				reaction_delay_deadline;	/*!< The reaction_delay_deadline deadline of transaction.*/
-	int				response_time;				/*!< The response time of transaction.*/
-	int				age_delay;					/*!< The age delay of transaction.*/
-	int				reaction_delay;				/*!< The reaction delay of transaction.*/
-	vector<TimePath*> time_paths;				/*!> Vector of all time paths.*/
-	Transaction();
-	~Transaction();
+	int				reaction_delay_deadline;	/*!< The reaction_delay_deadline deadline of transaction.*/	
+public:
 	/**
 	 * constructs a periodic task using vectors of elements and values
 	 * to be used for reading tasks from xml files
 	 */ 
-	Transaction(vector<char*> elements, vector<char*> values);
+	Base_Transaction(vector<char*> elements, vector<char*> values);
+	Base_Transaction(int _id, vector<int> _entity_ids, vector<Base_Entity*> _entities, int _deadline);
+	int get_id(){return id;};
+	vector<int> get_entity_ids(){return entity_ids;};
+	vector<Base_Entity*> get_entities(){return entities;};
+	int get_deadline(){return deadline;};
+	int get_age_delay_deadline(){return age_delay_deadline;};
+	int get_reaction_delay_deadline(){return reaction_delay_deadline;};
+	void Build_transaction(vector<Base_Entity*> all_entities);
+};
+class Transaction{
+public:
+	Base_Transaction& base_transaction;
+	vector<Entity*>	entities;           		/*!< A set of pointers pointing to the tasks and messages.*/
+	int				response_time;				/*!< The response time of transaction.*/
+	int				age_delay;					/*!< The age delay of transaction.*/
+	int				reaction_delay;				/*!< The reaction delay of transaction.*/
+	vector<TimePath*> time_paths;				/*!> Vector of all time paths.*/
+	Transaction(Base_Transaction& _base_transaction);
+	~Transaction();
 	/**
 	 * This function finds builds the task vector, i.e. tasks based on the task_ids vector
 	 */ 
@@ -64,7 +78,7 @@ public:
 	 * Returns the utilization of elements on node n.
 	 */  
 	double get_utilization(int n);
-	void Build_transaction(vector<RunTime_Entity*> all_entities);
+	
 	/**
 	 * calculates the response time for the transaction and updates the member
 	 */ 
@@ -78,10 +92,11 @@ public:
 	/**
 	 * Sets the count for the timepath enitity
 	 */ 
-	void adjust_count(RunTime_Entity* entity);
-	void increament_next_entity_count(RunTime_Entity* _entity);
+	void adjust_count(Entity* entity);
+	void increament_next_entity_count(Entity* _entity);
 	void calculateTransAgeDelay();
 	void calculateTransReacDelay();
+	int get_response_time();
 	friend std::ostream& operator<< (std::ostream &out, const Transaction &trans);
 	
 };
