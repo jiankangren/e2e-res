@@ -62,19 +62,20 @@ double Application::get_utilization(int n)
 }
 bool Application::schedulability()
 {
+	bool schedulable = true;
 	for (auto trans : transactions) 
 	{
 		for (auto entity : trans->entities) 
 		{
 			calculateResponseTime(entity);
-			if(entity->get_response_time() > entity->base_entity.get_deadline())
+			if(!entity->is_schedulable || entity->get_response_time() > entity->base_entity.get_deadline())
 			{
-				//cout << *entity << " is not schedulable, res time=" << entity->get_response_time() << endl;
-				return false;
+				cout << *entity << " is not schedulable, res time=" << entity->get_response_time() << endl;
+				schedulable = false;
 			}	
 		}
 		//cout << "calculating trans res time\n";	
-		trans->calculateTransResponseTime();
+		trans->calculateTransResponseTime();		
 	}
 	/// derive the activation time of tasks and messages in application 
 	deriveActivationInstants();
@@ -96,13 +97,19 @@ bool Application::schedulability()
 	{
 		trans->calculateTransAgeDelay();
 		trans->calculateTransReacDelay();		
-		if(trans->get_response_time() > trans->base_transaction.get_deadline())
+		
+		if(!trans->is_schedulable()
+		  || trans->age_delay <=0
+		  || trans->reaction_delay <=0
+		  || trans->get_response_time() > trans->base_transaction.get_deadline()
+		  || trans->age_delay > trans->base_transaction.get_age_delay_deadline()
+		  || trans->reaction_delay > trans->base_transaction.get_reaction_delay_deadline())
 		{
-			//cout << "trans missing deadline\n";
-			return false;
+			cout << "transaction is NOT schedulable \n" << *trans << endl;
+			schedulable = false;
 		}	
 	}
-	return true;
+	return schedulable;
 }
 std::ostream& operator<< (std::ostream &out, const Application &app)
 {
@@ -227,6 +234,7 @@ void  Application::calculateTaskResponseTime(Entity &entity)
 		if (_sbf >= _rbf)
 		{
 			entity.set_response_time(time);
+			entity.is_schedulable = true;
 			break;
 		}		
 	}	
@@ -245,6 +253,7 @@ void Application::calculateMessageResponseTime(Entity& entity)
 {
 	Message* message = dynamic_cast<Message*>(&entity.base_entity);
 	int idle = 0;
+	int schedulable_resources = 0;
 	/// for each link that the message crosses through
 	for(auto link_a: message->get_resources())
 	{
@@ -286,10 +295,15 @@ void Application::calculateMessageResponseTime(Entity& entity)
 			if (sbf >= rbf)
 			{
 				entity.add_to_response_time(time);
+				schedulable_resources++;				
 				break;
 			}
 		}
 		
+	}
+    if(schedulable_resources == message->get_resources().size())
+    {
+		entity.is_schedulable = true;
 	}
 }
 int Application::get_app_LCM()
@@ -357,31 +371,34 @@ void Application::findReachableTimePaths()
 	{
 		for(auto tp : trans->time_paths)
 		{
-			///Loop through all messages
+			///Loop through all entities
+			/*cout << "time path id[" << tp->id << "]"
+			     << " has " << tp->tp_entities.size()
+			     << " entities" << endl;
+			 */ 
 			for (auto tp_entity : tp->tp_entities)
 			{
-				if(tp_entity->base_entity.is_message()==true)
+				if(tp_entity != tp->tp_entities.back())
 			    {
 					forward = 0;
 					forward2 = 0;
 					alphaL = tp_entity->get_activation_time();
 					alphaLL = tp->get_activation_next_entity(tp_entity);
-					delta = tp_entity->get_response_time();
+					delta = tp_entity->entity.get_response_time();
 					/*
 					   cout << "alphaL=" << alphaL
-						 << " alphaLL=" << alphaL
-						 << " delta=" << alphaL 
+						 << " alphaLL=" << alphaLL
+						 << " delta=" << delta 
 						 << " next prio=" <<tp->get_priority_next_entity(tp_entity)
-						 << "cuurent prio=" <<  tp_entity->get_priority()
-						 << " next_activ_time=" << tp_entity->get_next_activ_time()
-						 << " id=" << tp_entity->get_id() << endl;	
-						 */ 
-					if ((alphaLL >= alphaL) && ((alphaLL >= alphaL + delta) || (tp->get_priority_next_entity(tp_entity) > tp_entity->base_entity.get_priority())))
+						 << " prio=" << tp_entity->entity.base_entity.get_priority()
+						 << " next_activ_time=" << tp_entity->get_next_activ_time() << endl;	
+					*/	 
+					if ((alphaLL >= alphaL) && ((alphaLL >= alphaL + delta) || (tp->get_priority_next_entity(tp_entity) > tp_entity->entity.base_entity.get_priority())))
 					{
 						forward = 1;
 					}
 					alphaLNext = tp_entity->get_next_activ_time();
-					if (!((alphaLL >= alphaLNext) && ((alphaLL >= alphaLNext + delta) || (tp->get_priority_next_entity(tp_entity) > tp_entity->base_entity.get_priority()))))
+					if (!((alphaLL >= alphaLNext) && ((alphaLL >= alphaLNext + delta) || (tp->get_priority_next_entity(tp_entity) > tp_entity->entity.base_entity.get_priority()))))
 					{
 						forward2 = 1;
 					}
@@ -432,6 +449,7 @@ void Application::findFirstTimePaths()
 							{
 								tp_a->is_first = false;
 								tp_b->is_first = true;
+								//cout << "time path " << tp_b->id << " is first" << endl;
 							}
 						
 					}
@@ -460,4 +478,31 @@ int Application::get_response_time(Base_Entity& _entity)
 		}
 	}
 	throw runtime_error("get_response_time did not find the entity");
+}
+int Application::get_response_time(Base_Transaction& _base_transaction)
+{
+	return find_transaction(_base_transaction).response_time;
+}
+
+Transaction& Application::find_transaction(Base_Transaction& _base_transaction)
+{
+	for (auto trans : transactions)
+	{
+		if(&trans->base_transaction == &_base_transaction)
+			return *trans;		
+	}
+	throw runtime_error("get_response_time did not find the transaction");
+}
+
+int Application::get_age_delay(Base_Transaction& _base_transaction)
+{
+	return find_transaction(_base_transaction).age_delay;
+}
+int Application::get_reaction_delay(Base_Transaction& _base_transaction)
+{
+	return find_transaction(_base_transaction).reaction_delay;
+}
+int Application::get_no_trans()
+{
+	return transactions.size();
 }

@@ -8,7 +8,8 @@ CP_model::CP_model(vector<Base_Transaction*> _base_transactions, Settings* _sett
 		no_resources = application->no_resources();
 		budget = IntVarArray(*this, no_resources, 0, Int::Limits::max);
 		period = IntVarArray(*this, no_resources, settings->getMin_period(), application->get_min_trans_deadline());
-		
+		res_times = IntVarArray(*this, application->get_no_trans(), 0, Int::Limits::max);
+		total_utilization = IntVar(*this, 0, Int::Limits::max);//100*no_resources);
 		std::ostream debug_stream(nullptr); /**< debuging stream, it is printed only in debug mode. */
 		std::stringbuf debug_strbuf;
 		debug_stream.rdbuf(&debug_strbuf); 
@@ -27,12 +28,17 @@ CP_model::CP_model(vector<Base_Transaction*> _base_transactions, Settings* _sett
 			for(int i=0; i<no_resources; i++)
 			{
 				rel(*this, budget[i] <= period[i]);  
-				rel(*this, utilization[i] >= application->get_utilization(i) * 100);  
+				rel(*this, utilization[i] >= ceil(application->get_utilization(i) * 100));  
 				rel(*this, budget[i]*100 >= utilization[i]*period[i]);  
 				debug_stream << "utilization on node " << i << " should be mode than = " <<  application->get_utilization(i) * 100 <<  endl;
 			}
+			rel(*this, total_utilization == sum(utilization));
+			Schedulability(*this, budget, period, res_times, _base_transactions);
 			
-			Schedulability(*this, budget, period, _base_transactions);
+			for(int i=0; i<_base_transactions.size(); i++)
+			{
+				rel(*this, res_times[i] <= _base_transactions[i]->get_deadline());  
+			}
 			
 			branch(*this, budget, INT_VAR_NONE(), INT_VAL_MIN());
 			branch(*this, period, INT_VAR_NONE(), INT_VAL_MAX());
@@ -54,6 +60,8 @@ CP_model::CP_model(bool share, CP_model& s):
 	{
 		budget.update(*this, share, s.budget);
 		period.update(*this, share, s.period);
+		total_utilization.update(*this, share, s.total_utilization);
+		res_times.update(*this, share, s.res_times);
 	}
   
 
@@ -68,6 +76,8 @@ void CP_model::print(std::ostream& out) const
 	out 	<< "----------------------------------------" << endl;
 	out 	<< 	"budget: " 					<< 	budget 					<< 	endl;
 	out 	<< 	"period: "	 				<< 	period	 				<< 	endl;
+	out 	<< 	"total_utilization: "	 	<< 	total_utilization		<< 	endl;
+	out 	<< 	"res_times: "	 	        << 	res_times		        << 	endl;
 	out 	<< 	"----------------------------------------" << endl;
   
 }

@@ -52,6 +52,8 @@ private:
 
 	IntVarArray 			budget;		/**< the budget of resources. */
 	IntVarArray 			period;		/**< the period of resources. */
+	IntVarArray 			res_times;		/**< the response time of all transactions. */
+	IntVar					total_utilization;/**< the sum of application utilizations. */
 	Application* 			application;	
 	int						no_resources;
   
@@ -80,8 +82,9 @@ public:
 
 		switch(settings->getOptCriterion())
 		{
-			case(Settings::POWER):
-				//rel(*this, sys_power < b.sys_power);
+			case(Settings::UTILIZATION):
+				//rel(*this, total_utilization < b.total_utilization);
+				rel(*this, res_times[0] < b.res_times[0]);
 				break;
 			default:
 				cout << "unknown optimization criterion !!!\n";

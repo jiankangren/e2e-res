@@ -52,7 +52,7 @@ public:
 	 * to be used for reading tasks from xml files
 	 */ 
 	Base_Transaction(vector<char*> elements, vector<char*> values);
-	Base_Transaction(int _id, vector<int> _entity_ids, vector<Base_Entity*> _entities, int _deadline);
+	Base_Transaction(int _id, vector<int> _entity_ids, vector<Base_Entity*> _entities, int _deadline, int _age_deadline, int _reaction_deadline);
 	int get_id(){return id;};
 	vector<int> get_entity_ids(){return entity_ids;};
 	vector<Base_Entity*> get_entities(){return entities;};
@@ -93,10 +93,12 @@ public:
 	 * Sets the count for the timepath enitity
 	 */ 
 	void adjust_count(Entity* entity);
-	void increament_next_entity_count(Entity* _entity);
+	void increment_next_entity_count(Entity* _entity);
 	void calculateTransAgeDelay();
 	void calculateTransReacDelay();
 	int get_response_time();
+	int get_first_task_period();
+	bool is_schedulable();
 	friend std::ostream& operator<< (std::ostream &out, const Transaction &trans);
 	
 };

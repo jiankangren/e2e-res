@@ -17,7 +17,7 @@ public:
 	
 	enum CPModels 		{NONECP, CP};
 	enum SearchTypes 	{NONESEARCH, FIRST, ALL, OPTIMIZE, OPTIMIZE_IT, GIST_ALL, GIST_OPT, PSA};
-	enum OptCriterion	{NONE, POWER, THROUGHPUT, LATENCY};
+	enum OptCriterion	{NONE, POWER, THROUGHPUT, LATENCY, UTILIZATION};
 	
 	Settings(std::string _filePath);
 	~Settings();

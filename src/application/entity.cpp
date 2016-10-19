@@ -161,8 +161,9 @@ bool Base_Entity::exist_on_resource(int resource_id)
 
 Entity::Entity(Base_Entity& _base_entity):base_entity(_base_entity)
 {
-	response_time = -1;	
-	count = -1;
+	response_time = 0;	///has to be 0 because message adds to it
+	count = -1; ///has to be -1 in the begining
+	is_schedulable = false;
 };
 void Entity::add_instace(int new_instance)
 {
@@ -182,7 +183,7 @@ int Entity::get_response_time()
 	if(response_time > 0 )
 		return response_time;
 	else
-		return -1;
+		return 0;
 }
 void Entity::set_response_time(int _response_time)
 {

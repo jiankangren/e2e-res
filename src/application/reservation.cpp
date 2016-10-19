@@ -29,11 +29,11 @@ int Reservation::sbf_proc(int time)
 	{
 		supply = 0;
 	}
-	else if ((time >= delta + sK * pi) || (time < delta + sK * pi + theta))
+	else if ((time >= delta + sK * pi) && (time < delta + sK * pi + theta))
 	{
 		supply = time - (delta + sK * (pi - theta));
 	}
-	else if ((time >= delta + sK * pi + theta) || (time < delta + (sK + 1) * pi))
+	else if ((time >= delta + sK * pi + theta) && (time < delta + (sK + 1) * pi))
 	{
 		supply = (sK + 1) * theta;
 	}
@@ -50,7 +50,7 @@ int Reservation::sbf_net(int time, int idle)
 		int maxCalc = time - xx - (yy * pi);
 		if (maxCalc < 0)
 			maxCalc = 0;
-		sbf = maxCalc + (yy * (pi - idle));
+		sbf = maxCalc + (yy * (theta - idle));
 	}
 	return sbf;
 }

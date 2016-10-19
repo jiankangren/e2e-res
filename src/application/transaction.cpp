@@ -4,9 +4,9 @@ using namespace std;
 
 Transaction::Transaction(Base_Transaction& _base_transaction):
 base_transaction(_base_transaction),
-response_time(-1),
-reaction_delay(-1),
-age_delay(-1)
+response_time(0),
+reaction_delay(0),
+age_delay(0)
 {
 	/**
 	 * We create a fresh vector of entities using the
@@ -25,10 +25,12 @@ Transaction::~Transaction()
 	for (auto path : time_paths)
 		delete path;
 };
-Base_Transaction::Base_Transaction(int _id, vector<int> _entity_ids, vector<Base_Entity*> _entities, int _deadline):
+Base_Transaction::Base_Transaction(int _id, vector<int> _entity_ids, vector<Base_Entity*> _entities, int _deadline, int _age_deadline, int _reaction_deadline):
 id(_id),
 entity_ids(_entity_ids),
-deadline(_deadline)
+deadline(_deadline),
+age_delay_deadline(_age_deadline),
+reaction_delay_deadline(_reaction_deadline)
 {
 	Build_transaction(_entities);
 };
@@ -111,8 +113,11 @@ std::ostream& operator<< (std::ostream &out, const Transaction &trans)
 			out << " -> ";
 	}	
 	out << " response time: " << trans.response_time 
+	    << " deadline("       << trans.base_transaction.get_deadline() << ")"
 	    << " age_delay="      << trans.age_delay
-	    << " reaction_delay=" << trans.reaction_delay; 
+	    << " deadline("       << trans.base_transaction.get_age_delay_deadline() << ")"
+	    << " reaction_delay=" << trans.reaction_delay
+	    << " deadline("       << trans.base_transaction.get_reaction_delay_deadline() << ")"; 
 	return out;
 }
 
@@ -141,16 +146,16 @@ void Transaction::findAllTimedPaths()
 	//cout << "no_time_paths=" << no_time_paths << endl;
 	for (int p = 0; p < no_time_paths; p++)
 	{
-		TimePath* new_time_path = new TimePath();
+		TimePath* new_time_path = new TimePath(p);
 		add_time_path(new_time_path);
 		for (auto entity: entities) 
 		{
 			TimePath_Entity* new_tp_entity =  new TimePath_Entity(*entity);
 			new_time_path->add_time_path_enity(new_tp_entity);
 			adjust_count(entity);
-			new_tp_entity->set_activation_time(entity);
-			new_tp_entity->set_instant(entity);
-			new_tp_entity->set_next_active_time(entity);			
+			new_tp_entity->set_activation_time();
+			new_tp_entity->set_instant();
+			new_tp_entity->set_next_active_time();
 		}
 		entities[0]->count++;
 	}
@@ -165,15 +170,16 @@ void Transaction::adjust_count(Entity* entity)
 	if(entity->count >= entity->get_instanc_size())
 	{
 		entity->count = 0;
-		increament_next_entity_count(entity);
+		increment_next_entity_count(entity);
 	}
 }
-void Transaction::increament_next_entity_count(Entity* _entity)
+void Transaction::increment_next_entity_count(Entity* _entity)
 {
 	bool found = false;
 	if(_entity == *entities.end())
 	{
 		/// This is the last entity, so we do not need to do anything.
+		//throw runtime_error("could not increment next entity count");
 		return;
 	}
 	try
@@ -181,7 +187,10 @@ void Transaction::increament_next_entity_count(Entity* _entity)
 		for (auto entity : entities)
 		{
 			if (found)
+			{
 				entity->count++;
+				return;
+			}
 			if(_entity == entity)
 				found = true;
 		}
@@ -200,7 +209,8 @@ void Transaction::calculateTransAgeDelay()
 	{
 		if(tp->reachable)
 		{
-			new_delay = tp->get_first_activation_time() - tp->get_last_activation_time();
+			new_delay = tp->get_last_activation_time() + tp->get_last_response_time()	 
+			            - tp->get_first_activation_time() ;
 			if(new_delay > delay)
 				delay = new_delay;
 		}
@@ -221,7 +231,8 @@ void Transaction::calculateTransReacDelay()
 	{
 		if(tp->is_first)
 		{
-			L2Fdelay = tp->get_last_activation_time() - tp->get_first_activation_time();
+			L2Fdelay = tp->get_last_activation_time() + tp->get_last_response_time()
+			           - tp->get_first_activation_time();
 			if(L2Fdelay > delay)
 				delay = L2Fdelay;
 		}
@@ -265,5 +276,21 @@ void Transaction::calculateTransReacDelay()
 		}
 	}
 	///Changed this from reacDelay to rDelay
-	reaction_delay = rDelay;
+	reaction_delay = rDelay + get_first_task_period();
+}
+
+int Transaction::get_first_task_period()
+{
+	if(!base_transaction.get_entities()[0]->is_task())
+		throw runtime_error("first transaction entity is not a task");
+	return base_transaction.get_entities()[0]->get_period();	
+}
+bool Transaction::is_schedulable()
+{
+	for (auto entity : entities)
+	{
+		if(!entity->is_schedulable)
+			return false;
+	}
+	return true;
 }

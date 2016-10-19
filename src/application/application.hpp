@@ -55,9 +55,14 @@ public:
 	
 	int no_resources();
 	
+	int get_no_trans();
+	
 	void set_reservations(vector<Reservation*> _reservations);
 	
 	int get_response_time(Base_Entity& entity);
+	int get_response_time(Base_Transaction& _base_transaction);
+	int get_age_delay(Base_Transaction& _base_transaction);
+	int get_reaction_delay(Base_Transaction& _base_transaction);
 private:
 	vector<Transaction*> transactions;	/*!< The set of transactions that compose the application.*/
 	vector<Reservation*> reservations;	/*!< The set of resource reservations that belong to this application.*/
@@ -111,6 +116,7 @@ private:
 	void findAllTimedPaths();  
 	void findReachableTimePaths();
 	void findFirstTimePaths();
+	Transaction& find_transaction(Base_Transaction& _base_transaction);
 	friend std::ostream& operator<< (std::ostream &out, const Application &trans);
 	
 };

@@ -42,18 +42,21 @@ class Schedulability : public Propagator {
 protected:
   ViewArray<IntView> theta_array; /*!< current budgets. */
   ViewArray<IntView> pi_array; /*!< current periods. */
+  ViewArray<IntView> res_times_array; /*!< current response times. */
   vector<Base_Transaction*> base_transactions;
 public:
   Schedulability( Space& home, 
                   ViewArray<IntView> _theta_array,
                   ViewArray<IntView> _pi_array,
+                  ViewArray<IntView> _res_times_array,
                   vector<Base_Transaction*> _base_transactions);
 
 static ExecStatus post(Space& home, 
 					   ViewArray<IntView> _theta_array,
 					   ViewArray<IntView> _pi_array,
+                       ViewArray<IntView> _res_times_array,
 					   vector<Base_Transaction*> _base_transactions){
-    (void) new (home) Schedulability(home, _theta_array, _pi_array, _base_transactions);
+    (void) new (home) Schedulability(home, _theta_array, _pi_array, _res_times_array, _base_transactions);
     return ES_OK;
   }
 
@@ -72,6 +75,7 @@ static ExecStatus post(Space& home,
 extern void  Schedulability( Space& home, 
                              const IntVarArgs& _theta_args,
                              const IntVarArgs& _pi_args,
+                             const IntVarArgs& _res_tims_args,
                              vector<Base_Transaction*> _base_transactions
                              );
 extern void Schedulability();

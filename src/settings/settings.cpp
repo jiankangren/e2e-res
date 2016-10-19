@@ -56,6 +56,7 @@ using namespace std;
 			case POWER  	:	criterionStr = "POWER";  		break;
 			case THROUGHPUT : 	criterionStr = "THROUGHPUT";	break;
 			case LATENCY	: 	criterionStr = "LATENCY";   	break;
+			case UTILIZATION: 	criterionStr = "UTILIZATION";   break;
 			default			: 	criterionStr = "unknown";   	break;	
 		}
 		return criterionStr;
@@ -171,6 +172,10 @@ using namespace std;
 			if(criterionStr.compare("LATENCY") == 0)
 			{
 				criterion = LATENCY;
+			}
+			if(criterionStr.compare("UTILIZATION") == 0)
+			{
+				criterion = UTILIZATION;
 			}
 		}
 		catch(const SettingNotFoundException &nfex)

@@ -30,6 +30,7 @@
 #include <string.h>
 #include <boost/math/common_factor.hpp>
 #include <exception>
+#include <stdexcept>
 #include <set>
 
 using namespace std;
@@ -98,6 +99,7 @@ private:
 	vector<int> instances; /*!< activation instance of the entity. */
 	
 public:
+    bool is_schedulable;
 	Base_Entity& base_entity;/*!< Reference to the base entity.*/
 	int count; /*! stores the entity instance that is relevant for the analysis.*/	  
 	Entity(Base_Entity& _base_entity);
@@ -131,7 +133,7 @@ public:
 	virtual ~Message(){};
 };
 
-class TimePath_Entity : public Entity
+class TimePath_Entity 
 {
 private:
 	int instant;
@@ -139,31 +141,36 @@ private:
 	int next_activ_time;
 	
 public:	
-	TimePath_Entity(Entity& entity) : Entity(entity),
+	Entity& entity;
+	TimePath_Entity(Entity& _entity) :
 	instant(0),
 	activation_time(0),
-	next_activ_time(0){}
-	void set_instant(Entity* entity){instant = entity->count + 1;};
+	next_activ_time(0),
+	entity(_entity){}
+	void set_instant(){instant = entity.count + 1;};
 	int get_instant(){return instant;};
 	int get_activation_time(){return activation_time;};
 	int get_next_activ_time(){return next_activ_time;};
 
-	void set_next_active_time(Entity* entity)
+	void set_next_active_time()
 	{
-		if (entity->count + 1 < entity->get_instanc_size())
+		if (entity.count + 1 < entity.get_instanc_size())
 		{
-			next_activ_time = entity->get_instance(entity->count + 1);
+			next_activ_time = entity.get_instance(entity.count + 1);
 		}
 		else
 		{
-			next_activ_time = entity->get_instance(entity->count) + entity->base_entity.get_period();
+			next_activ_time = entity.get_instance(entity.count) + entity.base_entity.get_period();
 		}
 	};
-	void set_activation_time(Entity* entity)
+	void set_activation_time()
 	{
-		if(entity->count > entity->get_instanc_size() || entity->count < 0)
-			{cout << "count=" << entity->count << " is out of range\n";return;}
-		activation_time = get_instance(entity->count);
+		if(entity.count > entity.get_instanc_size() || entity.count < 0)
+		{
+			cout << "count=" << entity.count << " is out of range\n";
+			throw runtime_error("count is out of range");;
+		}
+		activation_time = entity.get_instance(entity.count);
 	};
 };
 
@@ -175,6 +182,7 @@ public:
 	bool is_pred = false;
 	int  id = -1;
 	TimePath* pred_tp = nullptr;
+	TimePath(int _id){id = _id;};	
 	void add_time_path_enity(TimePath_Entity* tp_entity){tp_entities.push_back(tp_entity);};
 	vector<TimePath_Entity*> tp_entities;	
 	int get_activation_next_entity(TimePath_Entity* _tp_entity)
@@ -183,10 +191,13 @@ public:
 		for (auto tp_entity : tp_entities)
 		{
 			if(found)
+			{
 				return tp_entity->get_activation_time();
+			}
 			if(_tp_entity == tp_entity)
 				found = true;			
 		}
+		throw runtime_error("could not find the next entity for entity=");
 		return -1;
 	}
 	int get_priority_next_entity(TimePath_Entity* _tp_entity)
@@ -195,7 +206,7 @@ public:
 		for (auto tp_entity : tp_entities)
 		{
 			if(found)
-				return tp_entity->base_entity.get_priority();
+				return tp_entity->entity.base_entity.get_priority();
 			if(_tp_entity == tp_entity)
 				found = true;			
 		}
@@ -239,6 +250,17 @@ public:
 		try
 		{
 			return (*tp_entities.back()).get_next_activ_time();
+		}
+		catch(exception& e)
+		{
+			cout << "get_last_activation_time failed \n";
+		}
+	}
+	int get_last_response_time()
+	{
+		try
+		{
+			return (*tp_entities.back()).entity.get_response_time();
 		}
 		catch(exception& e)
 		{
