@@ -65,7 +65,7 @@ public:
 	CP_model(vector<Base_Transaction*> _base_transactions, Settings* _settings);
 
 	CP_model(bool share, CP_model& s);
-
+	
 	virtual Space* copy(bool share);
 	
 	/**
@@ -82,7 +82,15 @@ public:
 	virtual void constrain(const Space& _b)
 	{
 		const CP_model& b = static_cast<const CP_model&>(_b);
-
+		const int ratio = 100;//b.base_transactions[0]->get_deadline();
+		
+		int cost = (b.total_utilization.val()*ratio) + b.res_times[0].val();
+		IntArgs c(2); IntVarArgs x(2);
+		c[0]=ratio;
+		c[1]=1; 
+		x[0]=total_utilization;
+		x[1]=res_times[0];
+		
 		switch(settings->getOptCriterion())
 		{
 			case(Settings::RES_TIME):
@@ -97,6 +105,12 @@ public:
 			case(Settings::UTILIZATION):
 				rel(*this, total_utilization < b.total_utilization);
 				break;			
+			case(Settings::COST):	
+			cout << "*************cost=" << cost << endl;			
+				//rel(*this, total_utilization*base_transactions[0]->get_deadline() + res_times[0] < cost);
+				linear(*this, c , x , IRT_LE, cost);
+				break;			
+			
 			default:
 				cout << "unknown optimization criterion !!!\n";
 				throw CException("");

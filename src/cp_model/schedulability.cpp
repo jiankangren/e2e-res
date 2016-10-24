@@ -80,10 +80,13 @@ ExecStatus Schedulability::propagate(Space& home, const ModEventDelta&){
 	{
 		for (unsigned int i=0;i<base_transactions.size();i++)
 		{
-			if(application->get_response_time(*base_transactions[i]) < res_times_array[i].max())
+			if(application->get_response_time(*base_transactions[i]) > res_times_array[i].max())
 			{
-				cout << "contracting \n";
-				cout << "Wort-case res times \n" << *application << res_times_array << endl		 
+				cout << "*** ERROR  \n";
+				cout << "Wort-case res times \n" << *application 
+				     << res_times_array << endl		 
+					 << age_delay_array  << endl
+					 << reac_delay_array  << endl
 				     << theta_array << endl
 					 << pi_array
 					 << endl << endl;
@@ -116,9 +119,12 @@ ExecStatus Schedulability::propagate(Space& home, const ModEventDelta&){
 	{
 		for (unsigned int i=0;i<base_transactions.size();i++)
 		{
-			if(application->get_response_time(*base_transactions[i]) < res_times_array[i].max())
+			if(application->get_response_time(*base_transactions[i]) < res_times_array[i].min())
 			{	
-				cout << "Best-case res times \n" << *application << res_times_array << endl
+				cout << "*** ERROR \n Best-case res times \n" << *application 
+					<< res_times_array << endl
+					 << age_delay_array  << endl
+					 << reac_delay_array  << endl
 					 << theta_array << endl
 					 << pi_array
 					 << endl << endl;

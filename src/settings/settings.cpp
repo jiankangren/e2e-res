@@ -60,6 +60,7 @@ using namespace std;
 			case RES_TIME	: 	criterionStr = "RES_TIME";		break;
 			case AGE_DELAY	: 	criterionStr = "AGE_DELAY";		break;
 			case REACTION_DELAY:criterionStr = "REACTION_DELAY";break;
+			case COST		:   criterionStr = "COST";			break;
 			default			: 	criterionStr = "unknown";   	break;	
 		}
 		return criterionStr;
@@ -191,6 +192,10 @@ using namespace std;
 			if(criterionStr.compare("REACTION_DELAY") == 0)
 			{
 				criterion = REACTION_DELAY;
+			}
+			if(criterionStr.compare("COST") == 0)
+			{
+				criterion = COST;
 			}
 		}
 		catch(const SettingNotFoundException &nfex)

@@ -59,7 +59,14 @@ CP_model::CP_model(vector<Base_Transaction*> _base_transactions, Settings* _sett
 					branch(*this, utilization, INT_VAR_NONE(), INT_VAL_MIN());
 					branch(*this, budget, INT_VAR_NONE(), INT_VAL_MIN());
 					branch(*this, period, INT_VAR_NONE(), INT_VAL_MAX());
-					debug_stream << "branching for UTILIZATION\n";
+					debug_stream << "branching for UTILIZATION or COST\n";
+				}
+				if(settings->getOptCriterion() == Settings::COST)
+				{
+					branch(*this, utilization, INT_VAR_NONE(), INT_VAL_MED());
+					branch(*this, budget, INT_VAR_NONE(), INT_VAL_MIN());
+					branch(*this, period, INT_VAR_NONE(), INT_VAL_MAX());
+					debug_stream << "branching for UTILIZATION or COST\n";
 				}
 		    }
 		    else
@@ -82,7 +89,8 @@ CP_model::CP_model(vector<Base_Transaction*> _base_transactions, Settings* _sett
 CP_model::CP_model(bool share, CP_model& s):
 	Space(share, s),
 	application(s.application),
-	settings(s.settings)
+	settings(s.settings),
+	base_transactions(s.base_transactions)
 	{
 		budget.update(*this, share, s.budget);
 		period.update(*this, share, s.period);
@@ -110,6 +118,7 @@ void CP_model::print(std::ostream& out) const
 	out 	<< 	"res_times: "	 	        << 	res_times		        << 	endl;
 	out 	<< 	"age_delays: "	 	        << 	age_delays		        << 	endl;
 	out 	<< 	"reac_delays: "	 	        << 	reac_delays		        << 	endl;
+	out 	<< 	"max cost: "		 	        << 	total_utilization.max()*base_transactions[0]->get_deadline()+res_times[0].max()		        << 	endl;
 	out 	<< 	"----------------------------------------" << endl;
   
 }
@@ -123,6 +132,4 @@ void CP_model::printCSV(std::ostream& out) const
 		out << 	period[i] 	<< 	sep;
 	out		<< 	endl;
 }
-
-
 
