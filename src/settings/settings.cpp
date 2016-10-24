@@ -57,6 +57,9 @@ using namespace std;
 			case THROUGHPUT : 	criterionStr = "THROUGHPUT";	break;
 			case LATENCY	: 	criterionStr = "LATENCY";   	break;
 			case UTILIZATION: 	criterionStr = "UTILIZATION";   break;
+			case RES_TIME	: 	criterionStr = "RES_TIME";		break;
+			case AGE_DELAY	: 	criterionStr = "AGE_DELAY";		break;
+			case REACTION_DELAY:criterionStr = "REACTION_DELAY";break;
 			default			: 	criterionStr = "unknown";   	break;	
 		}
 		return criterionStr;
@@ -176,6 +179,18 @@ using namespace std;
 			if(criterionStr.compare("UTILIZATION") == 0)
 			{
 				criterion = UTILIZATION;
+			}
+			if(criterionStr.compare("RES_TIME") == 0)
+			{
+				criterion = RES_TIME;
+			}
+			if(criterionStr.compare("AGE_DELAY") == 0)
+			{
+				criterion = AGE_DELAY;
+			}
+			if(criterionStr.compare("REACTION_DELAY") == 0)
+			{
+				criterion = REACTION_DELAY;
 			}
 		}
 		catch(const SettingNotFoundException &nfex)

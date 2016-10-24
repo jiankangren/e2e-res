@@ -53,6 +53,9 @@ private:
 	IntVarArray 			budget;		/**< the budget of resources. */
 	IntVarArray 			period;		/**< the period of resources. */
 	IntVarArray 			res_times;		/**< the response time of all transactions. */
+	IntVarArray 			age_delays;		/**< the age delays of all transactions. */
+	IntVarArray 			reac_delays;		/**< the reaction delays of all transactions. */
+	IntVarArray 			utilization;	/**< the utilization of resources in percentage. */		
 	IntVar					total_utilization;/**< the sum of application utilizations. */
 	Application* 			application;	
 	int						no_resources;
@@ -82,10 +85,18 @@ public:
 
 		switch(settings->getOptCriterion())
 		{
-			case(Settings::UTILIZATION):
-				//rel(*this, total_utilization < b.total_utilization);
+			case(Settings::RES_TIME):
 				rel(*this, res_times[0] < b.res_times[0]);
 				break;
+			case(Settings::AGE_DELAY):
+				rel(*this, age_delays[0] < b.age_delays[0]);
+				break;
+			case(Settings::REACTION_DELAY):
+				rel(*this, reac_delays[0] < b.reac_delays[0]);
+				break;		
+			case(Settings::UTILIZATION):
+				rel(*this, total_utilization < b.total_utilization);
+				break;			
 			default:
 				cout << "unknown optimization criterion !!!\n";
 				throw CException("");

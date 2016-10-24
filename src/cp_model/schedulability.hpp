@@ -43,20 +43,26 @@ protected:
   ViewArray<IntView> theta_array; /*!< current budgets. */
   ViewArray<IntView> pi_array; /*!< current periods. */
   ViewArray<IntView> res_times_array; /*!< current response times. */
+  ViewArray<IntView> age_delay_array; /*!< current age delays. */
+  ViewArray<IntView> reac_delay_array; /*!< current reaction delays. */
   vector<Base_Transaction*> base_transactions;
 public:
   Schedulability( Space& home, 
                   ViewArray<IntView> _theta_array,
                   ViewArray<IntView> _pi_array,
                   ViewArray<IntView> _res_times_array,
+                  ViewArray<IntView> _age_delay_array,
+                  ViewArray<IntView> _reac_delay_array,
                   vector<Base_Transaction*> _base_transactions);
 
 static ExecStatus post(Space& home, 
 					   ViewArray<IntView> _theta_array,
 					   ViewArray<IntView> _pi_array,
                        ViewArray<IntView> _res_times_array,
+					   ViewArray<IntView> _age_delay_array,
+					   ViewArray<IntView> _reac_delay_array,
 					   vector<Base_Transaction*> _base_transactions){
-    (void) new (home) Schedulability(home, _theta_array, _pi_array, _res_times_array, _base_transactions);
+    (void) new (home) Schedulability(home, _theta_array, _pi_array, _res_times_array, _age_delay_array, _reac_delay_array, _base_transactions);
     return ES_OK;
   }
 
@@ -76,6 +82,8 @@ extern void  Schedulability( Space& home,
                              const IntVarArgs& _theta_args,
                              const IntVarArgs& _pi_args,
                              const IntVarArgs& _res_tims_args,
+                             const IntVarArgs& _age_delay_args,
+                             const IntVarArgs& _reac_delay_args,
                              vector<Base_Transaction*> _base_transactions
                              );
 extern void Schedulability();
