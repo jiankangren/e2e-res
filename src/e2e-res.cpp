@@ -67,6 +67,9 @@ int main(int argc, char ** argv)
 	vector<Base_Entity*> base_entities = iReader->ReadEntityset(entitysetFile);
 	cout <<	"found "	<<	base_entities.size() << " entities: \n";
 	
+	for(auto basic_ent: base_entities)
+	    cout << *basic_ent << endl;
+	
 	cout << messageStart + "Reading transactions ..." << endl;
 	vector<Base_Transaction*> base_transactions = iReader->ReadTransactions(transactionFile);
 	cout <<	"found "	<<	base_transactions.size() << " transactions: \n";

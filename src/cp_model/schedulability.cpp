@@ -7,18 +7,20 @@ using namespace std;
 
 
 Schedulability::Schedulability(Space& home, 
+				  ViewArray<IntView> _utilization_array,
                   ViewArray<IntView> _theta_array,
                   ViewArray<IntView> _pi_array,
                   ViewArray<IntView> _res_times_array,
                   ViewArray<IntView> _age_delay_array,
                   ViewArray<IntView> _reac_delay_array,
                   vector<Base_Transaction*> _base_transactions)
-  : Propagator(home), theta_array(_theta_array), pi_array(_pi_array), 
+  : Propagator(home), utilization_array(_utilization_array), theta_array(_theta_array), pi_array(_pi_array), 
     res_times_array(_res_times_array),
     age_delay_array(_age_delay_array),
     reac_delay_array(_reac_delay_array),
     base_transactions(_base_transactions)
 {
+  utilization_array.subscribe(home, *this, Int::PC_INT_BND);
   theta_array.subscribe(home, *this, Int::PC_INT_BND);
   pi_array.subscribe(home, *this, Int::PC_INT_BND);
   home.notice(*this, AP_DISPOSE);   
@@ -42,6 +44,7 @@ PropCost Schedulability::cost(const Space& home, const ModEventDelta& med) const
 
 Schedulability::Schedulability(Space& home, bool share, Schedulability& p)
   : Propagator(home, share, p),
+    utilization_array(p.utilization_array),
     theta_array(p.theta_array),
     pi_array(p.pi_array),
     res_times_array(p.res_times_array),
@@ -49,6 +52,7 @@ Schedulability::Schedulability(Space& home, bool share, Schedulability& p)
     reac_delay_array(p.reac_delay_array),
     base_transactions(p.base_transactions)
     {
+	utilization_array.update(home, share, p.utilization_array);
   theta_array.update(home, share, p.theta_array);
   pi_array.update(home, share, p.pi_array);
   res_times_array.update(home, share, p.res_times_array);
@@ -80,7 +84,7 @@ ExecStatus Schedulability::propagate(Space& home, const ModEventDelta&){
 	{
 		for (unsigned int i=0;i<base_transactions.size();i++)
 		{
-			if(application->get_response_time(*base_transactions[i]) > res_times_array[i].max())
+			/*if(application->get_response_time(*base_transactions[i]) > res_times_array[i].max())
 			{
 				cout << "*** ERROR  \n";
 				cout << "Wort-case res times \n" << *application 
@@ -90,13 +94,14 @@ ExecStatus Schedulability::propagate(Space& home, const ModEventDelta&){
 				     << theta_array << endl
 					 << pi_array
 					 << endl << endl;
-			}
+			}*/
 			GECODE_ME_CHECK(res_times_array[i].lq(home,application->get_response_time(*base_transactions[i])));
 			GECODE_ME_CHECK(age_delay_array[i].lq(home,application->get_age_delay(*base_transactions[i])));
 			GECODE_ME_CHECK(reac_delay_array[i].lq(home,application->get_reaction_delay(*base_transactions[i])));
 		}
     }
-	
+	//else
+	  //  cout << "NOT schedulable with Wort-casereservations \n" << *application ;
 	/**
 	 * Now we calculate response time assuming the highest bandwidths.
 	 */ 
@@ -113,13 +118,14 @@ ExecStatus Schedulability::propagate(Space& home, const ModEventDelta&){
 		reservations.push_back(new Reservation(id, theta, pi, priority, resource_id));
 	}
 	application = new Application(base_transactions, reservations);
+	//cout << "===== Testing with the best case\n";
 	schedulable = application->schedulability();
 
 	if(schedulable)
 	{
 		for (unsigned int i=0;i<base_transactions.size();i++)
 		{
-			if(application->get_response_time(*base_transactions[i]) < res_times_array[i].min())
+			/*if(application->get_response_time(*base_transactions[i]) < res_times_array[i].min())
 			{	
 				cout << "*** ERROR \n Best-case res times \n" << *application 
 					<< res_times_array << endl
@@ -128,34 +134,20 @@ ExecStatus Schedulability::propagate(Space& home, const ModEventDelta&){
 					 << theta_array << endl
 					 << pi_array
 					 << endl << endl;
-			}
+			}*/
 			GECODE_ME_CHECK(res_times_array[i].gq(home,application->get_response_time(*base_transactions[i])));
 			GECODE_ME_CHECK(age_delay_array[i].gq(home,application->get_age_delay(*base_transactions[i])));
-			GECODE_ME_CHECK(reac_delay_array[i].gq(home,application->get_reaction_delay(*base_transactions[i])));
-			if(application->get_response_time(*base_transactions[i]) > base_transactions[i]->get_deadline())
-			{
-				cout << "ES_FAILED!!!\n";
-				delete application;	
-				return ES_FAILED;
-			}
-			if(application->get_age_delay(*base_transactions[i]) > base_transactions[i]->get_age_delay_deadline())
-			{
-				cout << "ES_FAILED!!!\n";
-				delete application;	
-				return ES_FAILED;
-			}
-			if(application->get_reaction_delay(*base_transactions[i]) > base_transactions[i]->get_reaction_delay_deadline())
-			{
-				cout << "ES_FAILED!!!\n";
-				delete application;	
-				return ES_FAILED;
-			}
+			GECODE_ME_CHECK(reac_delay_array[i].gq(home,application->get_reaction_delay(*base_transactions[i])));			
 		}
 	}
 	else
 	{
-		cout << "ES_FAILED!!!\n";
+		/*cout << "Not schedulable with the best-case reservations ES_FAILED!!!" 
+		     << *application << endl
+		     << utilization_array << endl;*/
 		delete application;	
+		for (auto res : reservations)
+			delete res;
 		return ES_FAILED;
 	}
 	 
@@ -163,27 +155,34 @@ ExecStatus Schedulability::propagate(Space& home, const ModEventDelta&){
 	
 	if(theta_array.assigned() && pi_array.assigned())
     {
-		cout << "All assigned!!!\n"
+		/*cout << "All assigned!!!\n"
 		     << *application
 		     << res_times_array  << endl
 		     << age_delay_array  << endl
 		     << reac_delay_array  << endl
 			 << theta_array << endl
 			 << pi_array
-			 << endl << endl;
+			 << endl << endl;*/
 	    delete application;	
+	    for (auto res : reservations)
+			delete res;
 		return home.ES_SUBSUMED(*this);
 	}
     else
     {
+		for (auto res : reservations)
+			delete res;
 		delete application;	
 		return ES_FIX;
 	}
+	for (auto res : reservations)
+			delete res;
   delete application;	  
   return ES_FIX;
 }
 
 void Schedulability( Space& home, 
+					 const IntVarArgs& _utilization_args,
 					 const IntVarArgs& _theta_args,
 					 const IntVarArgs& _pi_args,
 					 const IntVarArgs& _res_tims_args,
@@ -193,6 +192,7 @@ void Schedulability( Space& home,
 {
   if (home.failed()) 
     return;
+  ViewArray<Int::IntView> tmp_util(home, _utilization_args);  
   ViewArray<Int::IntView> tmp_theta(home, _theta_args);
   ViewArray<Int::IntView> tmp_pi(home, _pi_args);  
   ViewArray<Int::IntView> tmp_res_times(home, _res_tims_args);  
@@ -201,7 +201,7 @@ void Schedulability( Space& home,
   if (_theta_args.size() != _pi_args.size()) {
     throw Gecode::Int::ArgumentSizeMismatch("Schedulability constraint, theta_args & pi_args");
   }
-  if (Schedulability::post(home, tmp_theta, tmp_pi, tmp_res_times, tmp_age_delay, tmp_reac_delay, _base_transactions) != ES_OK) {
+  if (Schedulability::post(home, tmp_util, tmp_theta, tmp_pi, tmp_res_times, tmp_age_delay, tmp_reac_delay, _base_transactions) != ES_OK) {
     home.fail();
   }
 }

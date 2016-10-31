@@ -182,12 +182,17 @@ public:
 	bool is_pred = false;
 	int  id = -1;
 	TimePath* pred_tp = nullptr;
-	TimePath(int _id){id = _id;};	
+	TimePath(int _id){id = _id;};
+	~TimePath()
+	{
+		for(auto tp_entity: tp_entities)
+			delete tp_entity;
+	};	
 	void add_time_path_enity(TimePath_Entity* tp_entity){tp_entities.push_back(tp_entity);};
 	vector<TimePath_Entity*> tp_entities;	
 	int get_activation_next_entity(TimePath_Entity* _tp_entity)
 	{
-		bool found = false;
+		bool found = false; 
 		for (auto tp_entity : tp_entities)
 		{
 			if(found)

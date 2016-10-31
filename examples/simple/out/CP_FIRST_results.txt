@@ -1,0 +1,11 @@
+*** Solution number: 1, after 118 ms, search nodes: 12, fail: 0, propagate: 93, depth: 8, nogoods: 0 ***
+----------------------------------------
+utilization: {1, 1, 1, 1}
+budget: {1, 1, 1, 1}
+period: {100, 100, 100, 100}
+total_utilization: 4
+res_times: {38396}
+age_delays: {100099}
+reac_delays: {140099}
+max cost: 278396
+----------------------------------------

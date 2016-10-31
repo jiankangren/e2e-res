@@ -40,6 +40,7 @@ using namespace std;
 class Schedulability : public Propagator {
 
 protected:
+  ViewArray<IntView> utilization_array; /*!< current utilizations. */
   ViewArray<IntView> theta_array; /*!< current budgets. */
   ViewArray<IntView> pi_array; /*!< current periods. */
   ViewArray<IntView> res_times_array; /*!< current response times. */
@@ -48,6 +49,7 @@ protected:
   vector<Base_Transaction*> base_transactions;
 public:
   Schedulability( Space& home, 
+				  ViewArray<IntView> _utilization_array,
                   ViewArray<IntView> _theta_array,
                   ViewArray<IntView> _pi_array,
                   ViewArray<IntView> _res_times_array,
@@ -56,13 +58,14 @@ public:
                   vector<Base_Transaction*> _base_transactions);
 
 static ExecStatus post(Space& home, 
+                       ViewArray<IntView> _utilization_array, 
 					   ViewArray<IntView> _theta_array,
 					   ViewArray<IntView> _pi_array,
                        ViewArray<IntView> _res_times_array,
 					   ViewArray<IntView> _age_delay_array,
 					   ViewArray<IntView> _reac_delay_array,
 					   vector<Base_Transaction*> _base_transactions){
-    (void) new (home) Schedulability(home, _theta_array, _pi_array, _res_times_array, _age_delay_array, _reac_delay_array, _base_transactions);
+    (void) new (home) Schedulability(home, _utilization_array, _theta_array, _pi_array, _res_times_array, _age_delay_array, _reac_delay_array, _base_transactions);
     return ES_OK;
   }
 
@@ -79,6 +82,7 @@ static ExecStatus post(Space& home,
 };
 
 extern void  Schedulability( Space& home, 
+							 const IntVarArgs& _utilization_args,
                              const IntVarArgs& _theta_args,
                              const IntVarArgs& _pi_args,
                              const IntVarArgs& _res_tims_args,

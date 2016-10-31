@@ -17,7 +17,7 @@ public:
 	
 	enum CPModels 		{NONECP, CP};
 	enum SearchTypes 	{NONESEARCH, FIRST, ALL, OPTIMIZE, OPTIMIZE_IT, GIST_ALL, GIST_OPT, PSA};
-	enum OptCriterion	{NONE, POWER, THROUGHPUT, LATENCY, UTILIZATION, RES_TIME, AGE_DELAY, REACTION_DELAY, COST};
+	enum OptCriterion	{NONE, POWER, THROUGHPUT, LATENCY, UTILIZATION, RES_TIME, AGE_DELAY, REACTION_DELAY, COST, OVERHEAD};
 	
 	Settings(std::string _filePath);
 	~Settings();
@@ -64,6 +64,10 @@ public:
 	 * Returns allowed minimum period
 	 */ 
 	int getMin_period();
+	/**
+	 * Returns allowed maximum utilization
+	 */ 
+	int getMax_utilzation();
 	friend std::ostream& operator<< (std::ostream &out, const Settings &settings);
 	
 private:
@@ -80,6 +84,7 @@ private:
 	unsigned long int 	luby_scale;
 	unsigned long int 	timeout;			/**< Search timeout. */
 	int 				min_period;			/*!< minimum allowed period. */
+	int 				max_utilization;			/*!< max allowed utilization. */
 	int loadDSESettings();
 
 };

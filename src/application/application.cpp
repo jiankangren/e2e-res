@@ -29,6 +29,8 @@ reservations(_reservations)
 };
 Application::~Application()
 {	
+	for (auto trans : transactions)
+		delete trans;
 }
 int Application::get_min_trans_deadline()
 {
@@ -70,7 +72,7 @@ bool Application::schedulability()
 			calculateResponseTime(entity);
 			if(!entity->is_schedulable || entity->get_response_time() > entity->base_entity.get_deadline())
 			{
-				cout << *entity << " is not schedulable, res time=" << entity->get_response_time() << endl;
+				//cout << *entity << " is not schedulable, res time=" << entity->get_response_time() << endl;
 				schedulable = false;
 			}	
 		}
@@ -105,7 +107,7 @@ bool Application::schedulability()
 		  || trans->age_delay > trans->base_transaction.get_age_delay_deadline()
 		  || trans->reaction_delay > trans->base_transaction.get_reaction_delay_deadline())
 		{
-			cout << "transaction is NOT schedulable \n" << *trans << endl;
+			//cout << "transaction is NOT schedulable \n" << *trans << endl;
 			schedulable = false;
 		}	
 	}
@@ -237,7 +239,7 @@ void  Application::calculateTaskResponseTime(Entity &entity)
 			entity.is_schedulable = true;
 			break;
 		}		
-	}	
+	}
 }
 
 Reservation& Application::get_resource(int resource_id)
@@ -459,9 +461,14 @@ void Application::findFirstTimePaths()
 	}
 }
 
-int Application::no_resources()
+int Application::get_max_resource_id()
 {
-	return resources.size();
+	for(auto res: resources)
+		cout << res << ", ";
+	set<int>::iterator i = resources.end();
+	--i;
+	int max_res_id = *i;	
+	return max_res_id;
 }
 void Application::set_reservations(vector<Reservation*> _reservations)
 {
@@ -505,4 +512,14 @@ int Application::get_reaction_delay(Base_Transaction& _base_transaction)
 int Application::get_no_trans()
 {
 	return transactions.size();
+}
+int Application::get_shortest_element_period()
+{
+	int shortest_period = INT_MAX;
+	for (auto trans : transactions)
+	{
+		if(trans->base_transaction.get_shortes_element_period() < shortest_period)
+			shortest_period = trans->base_transaction.get_shortes_element_period();	
+	}
+	return shortest_period;
 }

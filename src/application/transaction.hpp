@@ -59,6 +59,7 @@ public:
 	int get_deadline(){return deadline;};
 	int get_age_delay_deadline(){return age_delay_deadline;};
 	int get_reaction_delay_deadline(){return reaction_delay_deadline;};
+	int get_shortes_element_period();
 	void Build_transaction(vector<Base_Entity*> all_entities);
 };
 class Transaction{

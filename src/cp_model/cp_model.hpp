@@ -94,17 +94,20 @@ public:
 		switch(settings->getOptCriterion())
 		{
 			case(Settings::RES_TIME):
-				rel(*this, res_times[0] < b.res_times[0]);
+				rel(*this, sum(res_times) < sum(b.res_times));
 				break;
 			case(Settings::AGE_DELAY):
-				rel(*this, age_delays[0] < b.age_delays[0]);
+				rel(*this, sum(age_delays) < sum(b.age_delays));
 				break;
 			case(Settings::REACTION_DELAY):
-				rel(*this, reac_delays[0] < b.reac_delays[0]);
+				rel(*this, sum(reac_delays) < sum(b.reac_delays));
 				break;		
 			case(Settings::UTILIZATION):
 				rel(*this, total_utilization < b.total_utilization);
-				break;			
+				break;	
+			case(Settings::OVERHEAD):
+				rel(*this, sum(period) > sum(b.period));
+				break;
 			case(Settings::COST):	
 			cout << "*************cost=" << cost << endl;			
 				//rel(*this, total_utilization*base_transactions[0]->get_deadline() + res_times[0] < cost);

@@ -87,6 +87,18 @@ void Base_Transaction::Build_transaction(vector<Base_Entity*> all_entities)
 		}
 	}
 }
+int Base_Transaction::get_shortes_element_period()
+{
+	int shortest_period = INT_MAX;
+	for (auto base_entity : entities)
+	{
+		if(base_entity->get_period() < shortest_period)
+		{
+			shortest_period = base_entity->get_period();
+		}
+	}
+	return shortest_period;
+}
 double Transaction::get_utilization(int n)
 {
 	double utilization = 0.0;
@@ -205,10 +217,12 @@ void Transaction::calculateTransAgeDelay()
 {
 	int delay = 0;
 	int new_delay = 0;
+	int cnt_reachable = 0;
 	for (auto tp : time_paths)
 	{
 		if(tp->reachable)
 		{
+			cnt_reachable++;
 			new_delay = tp->get_last_activation_time() + tp->get_last_response_time()	 
 			            - tp->get_first_activation_time() ;
 			if(new_delay > delay)
@@ -216,6 +230,7 @@ void Transaction::calculateTransAgeDelay()
 		}
 	}
 	age_delay = delay;
+	//cout << "trans[" << base_transaction.get_id() << "]no rechabe paths=" << cnt_reachable << endl;
 }
 
 void Transaction::calculateTransReacDelay()

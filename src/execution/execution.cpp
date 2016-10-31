@@ -20,13 +20,20 @@ template <class CPModelTemplate>
 class Execution
 {
 public:
+	~Execution()
+	{
+		delete geSearchOptions.stop;
+	}
 	Execution(CP_model* _model, Settings* _settings):
     model(_model),
     settings(_settings)
     {
 		geSearchOptions.threads = 0.0;
-		Search::TimeStop stop(settings->getTimeout()); 
-		geSearchOptions.stop = &stop;
+		if(settings->getTimeout() > 0)
+		{
+		    Search::TimeStop* stop = new Search::TimeStop(settings->getTimeout()); 
+		    geSearchOptions.stop = stop;
+		}
 	};
 	/**
 	 * This funtion executes the CP model.

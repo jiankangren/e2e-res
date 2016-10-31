@@ -61,6 +61,7 @@ using namespace std;
 			case AGE_DELAY	: 	criterionStr = "AGE_DELAY";		break;
 			case REACTION_DELAY:criterionStr = "REACTION_DELAY";break;
 			case COST		:   criterionStr = "COST";			break;
+			case OVERHEAD	:   criterionStr = "OVERHEAD";		break;
 			default			: 	criterionStr = "unknown";   	break;	
 		}
 		return criterionStr;
@@ -197,6 +198,10 @@ using namespace std;
 			{
 				criterion = COST;
 			}
+			if(criterionStr.compare("OVERHEAD") == 0)
+			{
+				criterion = OVERHEAD;
+			}
 		}
 		catch(const SettingNotFoundException &nfex)
 		{
@@ -311,6 +316,20 @@ using namespace std;
 		catch(const SettingNotFoundException &nfex)
 		{
 			cerr << "No 'min_period' setting in configuration file." << endl;
+		}
+		
+		/**
+		 * Get min period
+		 */
+		try
+		{
+			string maxUtilStr 	= 	cfg.lookup("max_utilization");
+			max_utilization		=	atoi(maxUtilStr.c_str());
+			
+		}
+		catch(const SettingNotFoundException &nfex)
+		{
+			cerr << "No 'max_utilization' setting in configuration file." << endl;
 		} 
 		return 1;
 	}
@@ -381,6 +400,10 @@ using namespace std;
 	int Settings::getMin_period()
 	{
 		return min_period;
+	}
+	int Settings::getMax_utilzation()
+	{
+		return max_utilization;
 	}
 	std::ostream& operator<< (std::ostream &out, const Settings &settings)
 	{

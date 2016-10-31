@@ -27,6 +27,7 @@ name(""),
 type(""),
 id(0),
 preemtable(true),
+jitter(0),
 periodic(true)
 {
 	for(unsigned int i=0;i< elements.size();i++)
@@ -117,7 +118,8 @@ std::ostream& operator<< (std::ostream &out, const Base_Entity &entity)
 		out << ", res=" 		<< res;
 	out	<< "](" 			<< entity.period 		<< ", " 	
 	    << entity.deadline << ", "
-	    << entity.execution << ")"; 
+	    << entity.execution << ", "
+	    << entity.jitter << ")"; 
 	return out;
 }
 

@@ -53,7 +53,7 @@ public:
 	 */
 	bool schedulability();
 	
-	int no_resources();
+	int get_max_resource_id();
 	
 	int get_no_trans();
 	
@@ -63,6 +63,7 @@ public:
 	int get_response_time(Base_Transaction& _base_transaction);
 	int get_age_delay(Base_Transaction& _base_transaction);
 	int get_reaction_delay(Base_Transaction& _base_transaction);
+	int get_shortest_element_period();
 private:
 	vector<Transaction*> transactions;	/*!< The set of transactions that compose the application.*/
 	vector<Reservation*> reservations;	/*!< The set of resource reservations that belong to this application.*/
