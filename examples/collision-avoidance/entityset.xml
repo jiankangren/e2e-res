@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<taskset>
+	<!-- Node 5 CAC -->
+	<periodicTask>
+		<number>1</number>
+		<id>33</id>
+		<type>Radar</type>
+		<period>40000</period>
+		<deadline>40000</deadline>
+		<execution>100</execution>
+		<priority>1</priority>
+		<node>5</node>
+	</periodicTask> 
+	<periodicTask>
+		<number>1</number>
+		<id>34</id>
+		<type>CAC_Control</type>
+		<period>40000</period>
+		<priority>2</priority>
+		<deadline>40000</deadline>
+		<execution>100</execution>
+		<node>5</node>
+	</periodicTask> 
+	<periodicTask>
+		<number>1</number>
+		<id>35</id>
+		<type>CAC_Frame</type>
+		<period>40000</period>
+		<priority>3</priority>
+		<deadline>40000</deadline>
+		<execution>100</execution>
+		<node>5</node>
+	</periodicTask> 
+
+	<!-- Node 6 CAM -->
+	<periodicTask>
+		<number>1</number>
+		<id>36</id>
+		<type>CAM</type>
+		<period>40000</period>
+		<deadline>40000</deadline>
+		<execution>100</execution>
+		<priority>1</priority>
+		<node>6</node>
+	</periodicTask> 
+	
+	<!-- Node 4 SC ECU -->
+	<periodicTask>
+		<number>1</number>
+		<id>37</id>
+		<type>SC_Obstacle</type>
+		<period>40000</period>
+		<deadline>40000</deadline>
+		<execution>100</execution>
+		<priority>1</priority>
+		<node>4</node>
+	</periodicTask> 
+	<periodicTask>
+		<number>1</number>
+		<id>38</id>
+		<type>SC_Torque_Angle</type>
+		<period>40000</period>
+		<deadline>40000</deadline>
+		<execution>100</execution>
+		<priority>2</priority>
+		<node>4</node>
+	</periodicTask> 
+	
+
+	<!-- CAC to SW1 to SC -->					
+	<message>
+		<id>39</id>
+		<number>1</number>
+		<type>CAC_Message</type>
+		<priority>1</priority>
+		<period>40000</period>
+		<deadline>40000</deadline>
+		<memCons>5</memCons>
+		<execution>40</execution>
+		<link>13</link>
+		<link>19</link>
+	</message>
+	
+	<!-- CAM to SW1 to CAC -->					
+	<message>
+		<id>40</id>
+		<number>1</number>
+		<type>Camera_Msg</type>
+		<priority>1</priority>
+		<period>40000</period>
+		<deadline>40000</deadline>
+		<memCons>5</memCons>
+		<execution>120</execution>
+		<link>12</link>
+		<link>21</link>
+	</message>
+	
+	
+</taskset>

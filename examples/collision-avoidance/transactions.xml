@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactionset>
+	<transaction>
+		<id>21</id>
+		<task>33</task>
+		<task>34</task>
+		<task>39</task>
+		<task>37</task>
+		<task>38</task>
+		<deadline>110000</deadline>
+		<age_delay_deadline>110000</age_delay_deadline>
+		<reaction_delay_deadline>150000</reaction_delay_deadline>
+	</transaction> 		
+	<transaction>
+		<id>22</id>
+		<task>36</task>
+		<task>40</task>
+		<task>35</task>
+		<deadline>110000</deadline>
+		<age_delay_deadline>110000</age_delay_deadline>
+		<reaction_delay_deadline>150000</reaction_delay_deadline>
+	</transaction> 
+</transactionset>
