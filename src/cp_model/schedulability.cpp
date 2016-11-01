@@ -98,6 +98,11 @@ ExecStatus Schedulability::propagate(Space& home, const ModEventDelta&){
 			GECODE_ME_CHECK(res_times_array[i].lq(home,application->get_response_time(*base_transactions[i])));
 			GECODE_ME_CHECK(age_delay_array[i].lq(home,application->get_age_delay(*base_transactions[i])));
 			GECODE_ME_CHECK(reac_delay_array[i].lq(home,application->get_reaction_delay(*base_transactions[i])));
+			
+			if(application->get_response_time(*base_transactions[i]) > base_transactions[i]->get_deadline()
+			  || application->get_age_delay(*base_transactions[i]) > base_transactions[i]->get_age_delay_deadline()
+			  || application->get_reaction_delay(*base_transactions[i]) > base_transactions[i]->get_reaction_delay_deadline())
+				cout << "ERROR!!!\n\n";
 		}
     }
 	//else
