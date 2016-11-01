@@ -19,6 +19,8 @@ void Application::init(vector<Base_Transaction*> _transactions)
 		{
 			set<int> entity_resources = entity->get_resources();
 			resources.insert(entity_resources.begin(), entity_resources.end());
+			if(entity->is_task())
+			    cpu_resources.insert(entity_resources.begin(), entity_resources.end());
 		}
 	}
 }
@@ -463,9 +465,14 @@ void Application::findFirstTimePaths()
 
 int Application::get_max_resource_id()
 {
-	for(auto res: resources)
-		cout << res << ", ";
 	set<int>::iterator i = resources.end();
+	--i;
+	int max_res_id = *i;	
+	return max_res_id;
+}
+int Application::get_max_cpu_resource_id()
+{
+	set<int>::iterator i = cpu_resources.end();
 	--i;
 	int max_res_id = *i;	
 	return max_res_id;

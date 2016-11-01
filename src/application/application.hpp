@@ -40,6 +40,7 @@ public:
 	~Application();
 	void init(vector<Base_Transaction*> _transactions);
 	set<int> resources;
+	set<int> cpu_resources;
 	/**
 	 * Returns the minimum deadline among all transactions.
 	 */ 
@@ -54,6 +55,7 @@ public:
 	bool schedulability();
 	
 	int get_max_resource_id();
+	int get_max_cpu_resource_id();
 	
 	int get_no_trans();
 	

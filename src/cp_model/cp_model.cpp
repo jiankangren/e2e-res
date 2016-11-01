@@ -20,7 +20,8 @@ CP_model::CP_model(vector<Base_Transaction*> _base_transactions, Settings* _sett
 			debug_stream.rdbuf(&debug_strbuf); 
 			debug_stream << "\n==========\ndebug log:\n..........\n";
 			
-			cout << "logging\n" << "number of resources=" << no_resources << endl;
+			cout << "logging\n" << "number of resources=" << no_resources 
+			     << " cpu respurces: " << application->get_max_cpu_resource_id()<< endl;
 		 
 			IntVar period_resolution(*this, settings->getMin_period(), settings->getMin_period());
 			IntVar residual(*this, 0, 0);
@@ -89,7 +90,7 @@ CP_model::CP_model(vector<Base_Transaction*> _base_transactions, Settings* _sett
 				if(settings->getOptCriterion() == Settings::OVERHEAD)
 				{
 					branch(*this, period, INT_VAR_NONE(), INT_VAL_MIN());
-					branch(*this, total_utilization, INT_VAL_MIN());
+					branch(*this, total_utilization, INT_VAL_MAX());
 					branch(*this, utilization, INT_VAR_NONE(), INT_VAL_MED());
 					branch(*this, budget, INT_VAR_NONE(), INT_VAL_MIN());
 					debug_stream << "branching for OVERHEAD \n";
@@ -147,7 +148,7 @@ void CP_model::print(std::ostream& out) const
 	out 	<< 	"res_times: "	 	        << 	res_times		        << 	endl;
 	out 	<< 	"age_delays: "	 	        << 	age_delays		        << 	endl;
 	out 	<< 	"reac_delays: "	 	        << 	reac_delays		        << 	endl;
-	out 	<< 	"max cost: "		 	        << 	total_utilization.max()*base_transactions[0]->get_deadline()+res_times[0].max()		        << 	endl;
+	//out 	<< 	"max cost: "		 	        << 	total_utilization.max()*base_transactions[0]->get_deadline()+res_times[0].max()		        << 	endl;
 	out 	<< 	"----------------------------------------" << endl;
   
 }
@@ -176,3 +177,7 @@ void CP_model::printCSV(std::ostream& out) const
 	out		<< 	endl;
 }
 
+CP_model::~CP_model()
+{
+	//delete application;
+}

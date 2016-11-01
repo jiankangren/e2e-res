@@ -58,14 +58,14 @@ private:
 	IntVarArray 			utilization;	/**< the utilization of resources in percentage. */		
 	IntVar					total_utilization;/**< the sum of application utilizations. */
 	Application* 			application;	
-	int						no_resources;
+	int						no_resources;	
   
 public:
 
 	CP_model(vector<Base_Transaction*> _base_transactions, Settings* _settings);
 
 	CP_model(bool share, CP_model& s);
-	
+	~CP_model();
 	virtual Space* copy(bool share);
 	
 	/**
@@ -84,12 +84,17 @@ public:
 		const CP_model& b = static_cast<const CP_model&>(_b);
 		const int ratio = 100;//b.base_transactions[0]->get_deadline();
 		
-		int cost = (b.total_utilization.val()*ratio) + b.res_times[0].val();
+		int cost = (b.total_utilization.max()*ratio) + b.res_times[0].max();
 		IntArgs c(2); IntVarArgs x(2);
 		c[0]=ratio;
 		c[1]=1; 
 		x[0]=total_utilization;
 		x[1]=res_times[0];
+		
+		//(b.period).slice(0,1, no_cpu);
+		IntVarArgs old_period(*this, application->get_max_resource_id()+1, 0, Int::Limits::max);
+		old_period = b.period;
+		int no_cpu =  application->get_max_cpu_resource_id()+1;
 		
 		switch(settings->getOptCriterion())
 		{
@@ -106,7 +111,7 @@ public:
 				rel(*this, total_utilization < b.total_utilization);
 				break;	
 			case(Settings::OVERHEAD):
-				rel(*this, sum(period) > sum(b.period));
+				rel(*this, sum(period.slice(0,1, no_cpu)) > sum(old_period.slice(0,1, no_cpu)));
 				break;
 			case(Settings::COST):	
 			cout << "*************cost=" << cost << endl;			
