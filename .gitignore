@@ -30,7 +30,7 @@
 *.d
 *.*~
 *~
-*/bin*/
+*/bin*/**
 **/html/**
 **/latex/**
 **/figures/*.pdf
@@ -41,4 +41,3 @@ adse/experiments/*
 **/.metadata/*
 **/.settings/*
 **/.recommenders/*
-**/prTaskGenerator/bin/*
