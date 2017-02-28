@@ -6,8 +6,8 @@ CP_model::CP_model(vector<Base_Transaction*> _base_transactions, Settings* _sett
 		try
 		 {
 			base_transactions = _base_transactions;
-			application = new Application(_base_transactions);
 			settings = _settings;
+			application = new Application(_base_transactions);
 			no_resources = application->get_max_resource_id()+1;///Assuming resource ids start from 0
 			budget = IntVarArray(*this, no_resources, 0, Int::Limits::max);
 			period = IntVarArray(*this, no_resources, settings->getMin_period(), application->get_shortest_element_period());
@@ -22,6 +22,12 @@ CP_model::CP_model(vector<Base_Transaction*> _base_transactions, Settings* _sett
 			
 			cout << "logging\n" << "number of resources=" << no_resources 
 			     << " cpu respurces: " << application->get_max_cpu_resource_id()<< endl;
+                 
+            /**
+             * Experimenting with max footrprint for particular resources.
+             */
+            rel(*this, utilization[4] <= 2);
+            rel(*this, utilization[5] <= 2);
 		 
 			IntVar period_resolution(*this, settings->getMin_period(), settings->getMin_period());
 			IntVar residual(*this, 0, 0);
@@ -39,7 +45,7 @@ CP_model::CP_model(vector<Base_Transaction*> _base_transactions, Settings* _sett
 				    rel(*this, (utilization[i] == 0));  				
 				    rel(*this, (budget[i] == 0));  				
 				    rel(*this, (period[i] == period[i].min()));  
-				}
+				}                
 				rel(*this, budget[i]*100 == utilization[i]*period[i]);  
 				mod(*this, period[i], period_resolution, residual);				
 				debug_stream << "utilization on node " << i << " should be more than = " <<  application->get_utilization(i) * 100 <<  endl;
@@ -48,7 +54,7 @@ CP_model::CP_model(vector<Base_Transaction*> _base_transactions, Settings* _sett
 			rel(*this, total_utilization <= settings->getMax_utilzation());
 			Schedulability(*this, utilization, budget, period, res_times, age_delays, reac_delays, _base_transactions);
 			
-			for(int i=0; i<_base_transactions.size(); i++)
+			for(size_t i=0; i<_base_transactions.size(); i++)
 			{
 				rel(*this, res_times[i] <= _base_transactions[i]->get_deadline());  
 				rel(*this, age_delays[i] <= _base_transactions[i]->get_age_delay_deadline());  
@@ -64,12 +70,18 @@ CP_model::CP_model(vector<Base_Transaction*> _base_transactions, Settings* _sett
 				   settings->getOptCriterion() == Settings::REACTION_DELAY)
 				{
 					branch(*this, total_utilization, INT_VAL_MAX());
+                    //rel(*this, total_utilization == settings->getMax_utilzation());
+                    branch(*this, utilization, INT_VAR_NONE(), INT_VAL_MED());
+                    
 					//Rnd r(1U);
 					//branch(*this, total_utilization, INT_VAL_RND(r));
-					branch(*this, utilization, INT_VAR_NONE(), INT_VAL_MED());
-					branch(*this, budget, INT_VAR_NONE(), INT_VAL_MIN());
+					
+					branch(*this, budget, INT_VAR_NONE(), INT_VAL_MAX());
 					branch(*this, period, INT_VAR_NONE(), INT_VAL_MIN());
 					debug_stream << "branching for RES_TIME, AGE_DELAY or REACTION_DELAY\n";
+                    ///# assuming that increasing the period results in a worse sbf
+                    for(int i=0; i<no_resources; i++)
+                        rel(*this, (period[i] == period[i].min()));  
 				}
 				if(settings->getOptCriterion() == Settings::UTILIZATION)
 				{
@@ -78,13 +90,20 @@ CP_model::CP_model(vector<Base_Transaction*> _base_transactions, Settings* _sett
 					branch(*this, budget, INT_VAR_NONE(), INT_VAL_MIN());
 					branch(*this, period, INT_VAR_NONE(), INT_VAL_MAX());
 					debug_stream << "branching for UTILIZATION\n";
+                    ///# assuming that increasing the period results in a worse sbf
+                    for(int i=0; i<no_resources; i++)
+                        rel(*this, (period[i] == period[i].min()));  
 				}
+                ///#- optimizing for total utilization and sum of response times
 				if(settings->getOptCriterion() == Settings::COST)
 				{
-					branch(*this, total_utilization, INT_VAL_MAX());
-					branch(*this, utilization, INT_VAR_NONE(), INT_VAL_MED());
+					branch(*this, total_utilization, INT_VAL_MIN());
+					branch(*this, utilization, INT_VAR_NONE(), INT_VAL_MIN());
 					branch(*this, budget, INT_VAR_NONE(), INT_VAL_MIN());
 					branch(*this, period, INT_VAR_NONE(), INT_VAL_MAX());
+                    ///# assuming that increasing the period results in a worse sbf
+                    for(int i=0; i<no_resources; i++)
+                        rel(*this, (period[i] == period[i].min()));  
 					debug_stream << "branching for COST\n";
 				}
 				if(settings->getOptCriterion() == Settings::OVERHEAD)
@@ -117,10 +136,11 @@ CP_model::CP_model(vector<Base_Transaction*> _base_transactions, Settings* _sett
 }
   
 CP_model::CP_model(bool share, CP_model& s):
-	Space(share, s),
+	Space(share, s),	
+	base_transactions(s.base_transactions),
+    settings(s.settings),
 	application(s.application),
-	settings(s.settings),
-	base_transactions(s.base_transactions)
+    no_resources(s.no_resources)
 	{
 		budget.update(*this, share, s.budget);
 		period.update(*this, share, s.period);

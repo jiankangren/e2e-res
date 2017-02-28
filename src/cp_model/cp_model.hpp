@@ -48,7 +48,7 @@ class CP_model : public Space
 private:
 	vector<Base_Transaction*> base_transactions;/**< A vector of pointers to the base transactions. */  
 	Settings*	 			settings;	/**< Pointer to the setting object. */
-
+    Application* 			application;	
 
 	IntVarArray 			budget;		/**< the budget of resources. */
 	IntVarArray 			period;		/**< the period of resources. */
@@ -57,7 +57,6 @@ private:
 	IntVarArray 			reac_delays;		/**< the reaction delays of all transactions. */
 	IntVarArray 			utilization;	/**< the utilization of resources in percentage. */		
 	IntVar					total_utilization;/**< the sum of application utilizations. */
-	Application* 			application;	
 	int						no_resources;	
   
 public:
@@ -81,21 +80,29 @@ public:
 	*/ 
 	virtual void constrain(const Space& _b)
 	{
-		const CP_model& b = static_cast<const CP_model&>(_b);
-		const int ratio = 100;//b.base_transactions[0]->get_deadline();
+        const CP_model& b = static_cast<const CP_model&>(_b);
+		const int ratio = 1000;//b.base_transactions[0]->get_deadline();
 		
-		int cost = (b.total_utilization.max()*ratio) + b.res_times[0].max();
-		IntArgs c(2); IntVarArgs x(2);
+        int cost = (b.total_utilization.max()*ratio) ;
+        
+        int no_trans = application->get_no_trans();
+		IntArgs c(no_trans+1); IntVarArgs x(no_trans+1); 
 		c[0]=ratio;
-		c[1]=1; 
-		x[0]=total_utilization;
-		x[1]=res_times[0];
-		
+		x[0]=total_utilization;		
+		for(int i=0;i<no_trans;i++)
+        {
+            cost += b.res_times[i].max();
+            c[i+1]=1; 
+            x[i+1]=res_times[i];            
+        }
+        
+        
 		//(b.period).slice(0,1, no_cpu);
 		IntVarArgs old_period(*this, application->get_max_resource_id()+1, 0, Int::Limits::max);
 		old_period = b.period;
 		int no_cpu =  application->get_max_cpu_resource_id()+1;
 		
+        
 		switch(settings->getOptCriterion())
 		{
 			case(Settings::RES_TIME):
@@ -114,7 +121,7 @@ public:
 				rel(*this, sum(period.slice(0,1, no_cpu)) > sum(old_period.slice(0,1, no_cpu)));
 				break;
 			case(Settings::COST):	
-			cout << "*************cost=" << cost << endl;			
+			//cout << "*************cost=" << cost << endl;			
 				//rel(*this, total_utilization*base_transactions[0]->get_deadline() + res_times[0] < cost);
 				linear(*this, c , x , IRT_LE, cost);
 				break;			
