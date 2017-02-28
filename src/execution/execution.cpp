@@ -28,7 +28,7 @@ public:
     model(_model),
     settings(_settings)
     {
-		geSearchOptions.threads = 0.0;
+		geSearchOptions.threads = 0;
 		if(settings->getTimeout() > 0)
 		{
 		    Search::TimeStop* stop = new Search::TimeStop(settings->getTimeout()); 
@@ -81,6 +81,7 @@ public:
 				cout << "BAB engine, optimizing iteratively ... \n";
 				Search::Cutoff* cut = Search::Cutoff::luby(settings->getLubyScale());
 				geSearchOptions.cutoff = cut;
+                geSearchOptions.nogoods_limit = 128;
 				RBS<BAB,CPModelTemplate> e(model, geSearchOptions);
 				loopSolutions<RBS<BAB,CPModelTemplate>>(&e);
 				break;
