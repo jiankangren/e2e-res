@@ -47,6 +47,7 @@ protected:
   ViewArray<IntView> age_delay_array; /*!< current age delays. */
   ViewArray<IntView> reac_delay_array; /*!< current reaction delays. */
   vector<Base_Transaction*> base_transactions;
+  void print(Application*);
 public:
   Schedulability( Space& home, 
 				  ViewArray<IntView> _utilization_array,
@@ -90,4 +91,6 @@ extern void  Schedulability( Space& home,
                              const IntVarArgs& _reac_delay_args,
                              vector<Base_Transaction*> _base_transactions
                              );
-extern void Schedulability();
+extern void Schedulability(Application* application);
+
+

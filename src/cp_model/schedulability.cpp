@@ -21,12 +21,17 @@ Schedulability::Schedulability(Space& home,
     base_transactions(_base_transactions)
 {
   utilization_array.subscribe(home, *this, Int::PC_INT_BND);
+  utilization_array.subscribe(home, *this, Int::ME_INT_VAL);
   theta_array.subscribe(home, *this, Int::PC_INT_BND);
   pi_array.subscribe(home, *this, Int::PC_INT_BND);
   home.notice(*this, AP_DISPOSE);   
 }
 
 size_t Schedulability::dispose(Space& home){
+  utilization_array.cancel(home, *this, Int::PC_INT_BND);
+  utilization_array.cancel(home, *this, Int::ME_INT_VAL);
+  theta_array.cancel(home, *this, Int::PC_INT_BND);
+  pi_array.cancel(home, *this, Int::PC_INT_BND);
   home.ignore(*this, AP_DISPOSE);
   (void) Propagator::dispose(home);  
   return sizeof(*this);
@@ -62,13 +67,18 @@ Schedulability::Schedulability(Space& home, bool share, Schedulability& p)
 
 
 ExecStatus Schedulability::propagate(Space& home, const ModEventDelta&){
+    Application* application;
+	vector<Reservation*> reservations;
+    bool schedulable;	
     /**
      * First we calculate the response time assuming the minimum bandwidth
      * i.e., min budget and max period
      * We can use the result of the analysis only if the systems is schedulable
      * otherwise the response times might be zero
      */ 
-    vector<Reservation*> reservations;
+    
+    ///# This case is usefull when optimization for the cost (?)
+    /*
     for(int i = 0; i<theta_array.size();i++)
     {  
 		int id = i;
@@ -78,23 +88,16 @@ ExecStatus Schedulability::propagate(Space& home, const ModEventDelta&){
 		int priority = 1;
 		reservations.push_back(new Reservation(id, theta, pi, priority, resource_id));
 	}
-	Application* application = new Application(base_transactions, reservations);
-	bool schedulable = application->schedulability();
+	
+    application = new Application(base_transactions, reservations);
+	schedulable = application->schedulability();
+    cout << "worst case\n";
+    print(application);
+	
 	if(schedulable)
 	{
 		for (unsigned int i=0;i<base_transactions.size();i++)
 		{
-			/*if(application->get_response_time(*base_transactions[i]) > res_times_array[i].max())
-			{
-				cout << "*** ERROR  \n";
-				cout << "Wort-case res times \n" << *application 
-				     << res_times_array << endl		 
-					 << age_delay_array  << endl
-					 << reac_delay_array  << endl
-				     << theta_array << endl
-					 << pi_array
-					 << endl << endl;
-			}*/
 			GECODE_ME_CHECK(res_times_array[i].lq(home,application->get_response_time(*base_transactions[i])));
 			GECODE_ME_CHECK(age_delay_array[i].lq(home,application->get_age_delay(*base_transactions[i])));
 			GECODE_ME_CHECK(reac_delay_array[i].lq(home,application->get_reaction_delay(*base_transactions[i])));
@@ -105,14 +108,13 @@ ExecStatus Schedulability::propagate(Space& home, const ModEventDelta&){
 				cout << "ERROR!!!\n\n";
 		}
     }
-	//else
-	  //  cout << "NOT schedulable with Wort-casereservations \n" << *application ;
-	/**
-	 * Now we calculate response time assuming the highest bandwidths.
-	 */ 
+	 
 	delete application;	
     reservations.clear();
-    
+    */ 
+    /**
+	 * Now we calculate response time assuming the highest bandwidths.
+	 */
     for(int i = 0; i<theta_array.size();i++)
     {  
 		int id = i;
@@ -125,8 +127,9 @@ ExecStatus Schedulability::propagate(Space& home, const ModEventDelta&){
 	application = new Application(base_transactions, reservations);
 	//cout << "===== Testing with the best case\n";
 	schedulable = application->schedulability();
-
-	if(schedulable)
+    //cout << "best case-----------------------------------------------------\n";
+    //print(application);
+    if(schedulable)
 	{
 		for (unsigned int i=0;i<base_transactions.size();i++)
 		{
@@ -147,7 +150,8 @@ ExecStatus Schedulability::propagate(Space& home, const ModEventDelta&){
 	}
 	else
 	{
-		/*cout << "Not schedulable with the best-case reservations ES_FAILED!!!" 
+		//cout << "Not schedulable with the best-case reservations ES_FAILED!!!\n" ;
+         /* 
 		     << *application << endl
 		     << utilization_array << endl;*/
 		delete application;	
@@ -168,6 +172,12 @@ ExecStatus Schedulability::propagate(Space& home, const ModEventDelta&){
 			 << theta_array << endl
 			 << pi_array
 			 << endl << endl;*/
+        for (unsigned int i=0;i<base_transactions.size();i++)
+		{
+            GECODE_ME_CHECK(res_times_array[i].eq(home,application->get_response_time(*base_transactions[i])));
+            GECODE_ME_CHECK(age_delay_array[i].eq(home,application->get_age_delay(*base_transactions[i])));
+            GECODE_ME_CHECK(reac_delay_array[i].eq(home,application->get_reaction_delay(*base_transactions[i])));	     
+        }
 	    delete application;	
 	    for (auto res : reservations)
 			delete res;
@@ -178,12 +188,8 @@ ExecStatus Schedulability::propagate(Space& home, const ModEventDelta&){
 		for (auto res : reservations)
 			delete res;
 		delete application;	
-		return ES_FIX;
+        return ES_FIX;        
 	}
-	for (auto res : reservations)
-			delete res;
-  delete application;	  
-  return ES_FIX;
 }
 
 void Schedulability( Space& home, 
@@ -209,4 +215,22 @@ void Schedulability( Space& home,
   if (Schedulability::post(home, tmp_util, tmp_theta, tmp_pi, tmp_res_times, tmp_age_delay, tmp_reac_delay, _base_transactions) != ES_OK) {
     home.fail();
   }
+}
+void Schedulability::print(Application* application)
+{
+    cout     
+             //<< *application << endl
+		     << utilization_array << endl
+             << res_times_array << endl
+             << age_delay_array << endl
+             << reac_delay_array << endl;
+   for (unsigned int i=0;i<base_transactions.size();i++)  
+        cout << application->get_response_time(*base_transactions[i])  << " ";   
+   cout << endl;     
+   for (unsigned int i=0;i<base_transactions.size();i++)  
+        cout << application->get_age_delay(*base_transactions[i])  << " ";   
+   cout << endl;     
+   for (unsigned int i=0;i<base_transactions.size();i++)  
+        cout << application->get_reaction_delay(*base_transactions[i])  << " ";   
+   cout << endl;     
 }
